@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  prefix: "du-";
+  logs: false;
+}
+
+* {
+  font-family: Comic Sans MS;
+}
+
+html {
+  @apply bg-sky-100 overflow-scroll;
+  scrollbar-width: thin;
+}
+
+button {
+  @apply cursor-pointer;
+}
