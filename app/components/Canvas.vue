@@ -219,11 +219,11 @@ function stampSelection() {
   const tool = tools.value.select;
 
   if (tool.selectedImageData) {
+    context.value.fillStyle = currentColor.value.secondary;
+    context.value.fillRect(...tool.previousSelectionRect);
     const [x, y] = tool.selectionRect;
     context.value.putImageData(tool.selectedImageData, x, y);
     tool.selectedImageData = null;
-    context.value.fillStyle = currentColor.value.secondary;
-    context.value.fillRect(...tool.previousSelectionRect);
     saveHistory();
   }
 
