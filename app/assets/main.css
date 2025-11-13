@@ -9,7 +9,7 @@
 }
 
 html {
-  @apply bg-sky-100 overflow-scroll;
+  @apply overflow-scroll bg-sky-100 text-black select-none;
   scrollbar-width: thin;
 }
 

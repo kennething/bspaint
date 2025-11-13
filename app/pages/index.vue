@@ -1,11 +1,32 @@
 <template>
-  <div class="w-full h-full min-h-dvh min-w-dvw p-60">
+  <div class="flex h-full min-h-dvh w-full min-w-dvw items-start justify-start p-60">
     <Toolbar />
 
-    <LazyCanvas />
+    <Canvas />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const userStore = useUserStore();
+const { currentTool } = storeToRefs(userStore);
+
+function getCursorStyle(tool: ToolType) {
+  if (tool === "brush") return "cell";
+  if (tool === "eraser") return "grab";
+  if (tool === "fill") return "copy";
+  if (tool === "select") return "crosshair";
+  return "default";
+}
+
+onMounted(() =>
+  watch(
+    currentTool,
+    (newTool) => {
+      document.body.style.cursor = getCursorStyle(newTool);
+    },
+    { immediate: true }
+  )
+);
+</script>
 
 <style scoped></style>
