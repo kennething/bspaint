@@ -117,15 +117,55 @@ function redo() {
   restoreHistoryState();
 }
 
-function handleKeybinds(event: KeyboardEvent) {
+async function handleKeybinds(event: KeyboardEvent) {
+  if (currentTool.value === "select" && event.key === "Backspace") {
+    stampSelection(false);
+    return event.preventDefault();
+  }
+
   if (event.ctrlKey || event.metaKey) {
+    if (currentTool.value === "select" && !["idle", "selecting"].includes(tools.value.select.selectState) && event.key === "c") {
+      const image = new Image();
+      const tool = tools.value.select;
+      if (!canvas.value || !tool.selectionCanvas) return;
+      image.src = tool.selectionCanvas.toDataURL();
+      navigator.clipboard.write([
+        new ClipboardItem({
+          "image/png": fetch(image.src).then((res) => res.blob())
+        })
+      ]);
+      return event.preventDefault();
+    }
+    if (event.key === "v" && canvas.value) {
+      currentTool.value = "select";
+      const tool = tools.value.select;
+      if (tool.selectionCanvas) stampSelection();
+
+      const [item] = await navigator.clipboard.read();
+      if (!item) return;
+
+      const data = await item.getType("image/png");
+      if (!data) return;
+
+      const image = new Image();
+      image.onload = () => {
+        if (!canvas.value || !context.value) return;
+        tool.selectionRect = [0, 0, image.width, image.height];
+        tool.selectionCanvas = document.createElement("canvas");
+        tool.selectionCanvas.width = image.width;
+        tool.selectionCanvas.height = image.height;
+        tool.selectionCanvas.getContext("2d")!.drawImage(image, 0, 0);
+        tool.selectState = "selected";
+      };
+      image.src = URL.createObjectURL(data);
+      return event.preventDefault();
+    }
     if ((event.shiftKey && event.key === "z") || event.key === "y") {
       redo();
       return event.preventDefault();
     }
     if (event.key === "z") {
       if (currentTool.value === "select" && ["selected", "moving"].includes(tools.value.select.selectState)) stampSelection();
-
       undo();
       return event.preventDefault();
     }
@@ -135,7 +175,7 @@ onMounted(() => window.addEventListener("keydown", handleKeybinds));
 onUnmounted(() => window.removeEventListener("keydown", handleKeybinds));
 
 function changeCursor(event: KeyboardEvent) {
-  if (currentTool.value !== "select") return;
+  if (currentTool.value !== "select") return (document.body.style.cursor = getCursorStyle(currentTool.value));
 
   if (event.shiftKey) document.body.style.cursor = "alias";
   else if (event.ctrlKey || event.metaKey) document.body.style.cursor = "nwse-resize";
@@ -281,7 +321,7 @@ function isPointInSelection(x: number, y: number) {
   return rotateX >= -selectionWidth / 2 && rotateX <= selectionWidth / 2 && rotateY >= -selectionHeight / 2 && rotateY <= selectionHeight / 2;
 }
 
-function stampSelection() {
+function stampSelection(stampImage = true) {
   if (!canvas.value || !context.value) return;
   const tool = tools.value.select;
 
@@ -289,17 +329,20 @@ function stampSelection() {
     context.value.fillStyle = currentColor.value.secondary;
     context.value.fillRect(...tool.previousSelectionRect);
 
-    const [x, y, width, height] = tool.selectionRect;
-    const translateX = x + width / 2;
-    const translateY = y + height / 2;
+    if (stampImage) {
+      const [x, y, width, height] = tool.selectionRect;
+      const translateX = x + width / 2;
+      const translateY = y + height / 2;
 
-    context.value.save();
-    context.value.translate(translateX, translateY);
-    context.value.rotate(tool.rotationAngle);
-    context.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
+      context.value.save();
+      context.value.translate(translateX, translateY);
+      context.value.rotate(tool.rotationAngle);
+      context.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
+    }
 
     context.value.restore();
     tool.selectionCanvas = null;
+    document.body.style.cursor = "crosshair";
     saveHistory();
   }
 
@@ -349,7 +392,7 @@ function captureSelection() {
   tool.selectState = "selected";
 }
 
-function handleMouseMove(event: MouseEvent) {
+function handleMouseMove(event: MouseEvent): void {
   if (!context.value || ["fill", "eyedropper"].includes(currentTool.value)) return;
 
   if (currentTool.value === "brush" || currentTool.value === "eraser") {
@@ -406,9 +449,9 @@ function handleMouseMove(event: MouseEvent) {
 
   if (select.selectState === "moving") {
     const [x, y] = select.selectionRect;
-    if (isPointInSelection(x, y)) document.body.style.cursor = "move";
-    else document.body.style.cursor = "crosshair";
+    if (isPointInSelection(x, y)) return void (document.body.style.cursor = "move");
   }
+  document.body.style.cursor = "crosshair";
 }
 
 function handleMouseUp() {
