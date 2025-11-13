@@ -29,8 +29,9 @@ export const useUserStore = defineStore("userStore", () => {
       selectState: "idle",
       selectionRect: [0, 0, 0, 0],
       previousSelectionRect: [0, 0, 0, 0],
-      selectedImageData: null,
-      moveOffset: [0, 0]
+      rotationAngle: 0,
+      selectionCanvas: null,
+      startInteractionData: null
     } as Select
   }) satisfies Reactive<Record<ToolType, Tool>>;
 

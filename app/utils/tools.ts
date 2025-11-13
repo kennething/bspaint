@@ -15,14 +15,24 @@ export interface Eraser extends Tool {
   radius: number;
   isDrawing: boolean;
 }
+type SelectionRect = [x: number, y: number, width: number, height: number];
 export interface Select extends Tool {
   type: "select";
   isTransparent: boolean;
-  selectState: "idle" | "selecting" | "selected" | "moving";
-  selectionRect: [x: number, y: number, width: number, height: number];
-  previousSelectionRect: [x: number, y: number, width: number, height: number];
-  selectedImageData: ImageData | null;
-  moveOffset: [x: number, y: number];
+  selectState: "idle" | "selecting" | "selected" | "moving" | "rotating" | "resizing";
+  selectionRect: SelectionRect;
+  previousSelectionRect: SelectionRect;
+  /** Holds rotation angle in radians */
+  rotationAngle: number;
+  selectionCanvas: HTMLCanvasElement | null;
+  startInteractionData: {
+    startMouseX: number;
+    startMouseY: number;
+    startRect: SelectionRect;
+    startAngle: number;
+    startDistance: number;
+    startMouseAngle: number;
+  } | null;
 }
 
 const tools = ["brush", "fill", "eraser", "select"] as const;

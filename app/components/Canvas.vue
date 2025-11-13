@@ -62,10 +62,22 @@ function drawLoop() {
   overlayContext.value.lineWidth = 1;
   overlayContext.value.setLineDash([4, 2]);
 
-  if ((tool.selectState === "selected" || tool.selectState === "moving") && tool.selectedImageData) {
-    overlayContext.value.putImageData(tool.selectedImageData, tool.selectionRect[0], tool.selectionRect[1]);
+  if (tool.selectState === "selecting") overlayContext.value.strokeRect(...tool.selectionRect);
+  else if (tool.selectionCanvas && ["selected", "moving", "rotating", "resizing"].includes(tool.selectState)) {
+    const [x, y, width, height] = tool.selectionRect;
+    const translateX = x + width / 2;
+    const translateY = y + height / 2;
+
+    overlayContext.value.save();
+    overlayContext.value.translate(translateX, translateY);
+    overlayContext.value.rotate(tool.rotationAngle);
+
+    overlayContext.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
+    overlayContext.value.strokeRect(-width / 2, -height / 2, width, height);
+
+    overlayContext.value.restore();
   }
-  overlayContext.value.strokeRect(...tool.selectionRect);
+
   overlayContext.value.setLineDash([]);
 }
 
@@ -122,6 +134,18 @@ function handleKeybinds(event: KeyboardEvent) {
 onMounted(() => window.addEventListener("keydown", handleKeybinds));
 onUnmounted(() => window.removeEventListener("keydown", handleKeybinds));
 
+function changeCursor(event: KeyboardEvent) {
+  if (currentTool.value !== "select" && !(event.shiftKey || event.ctrlKey || event.metaKey)) return;
+
+  if (event.shiftKey) document.body.style.cursor = "alias";
+  else if (event.ctrlKey || event.metaKey) document.body.style.cursor = "nwse-resize";
+  else document.body.style.cursor = "crosshair";
+}
+onMounted(() => window.addEventListener("keydown", changeCursor));
+onMounted(() => window.addEventListener("keyup", changeCursor));
+onUnmounted(() => window.removeEventListener("keydown", changeCursor));
+onUnmounted(() => window.removeEventListener("keyup", changeCursor));
+
 function handleZoom(event: WheelEvent) {
   if (!canvas.value || !(event.ctrlKey || event.metaKey)) return;
   event.preventDefault();
@@ -141,7 +165,7 @@ function preventRightClick(event: MouseEvent) {
 onMounted(() => window.addEventListener("contextmenu", preventRightClick));
 onUnmounted(() => window.removeEventListener("contextmenu", preventRightClick));
 
-function handleMouseDown(event: MouseEvent) {
+function handleMouseDown(event: MouseEvent): void {
   if (!canvas.value || !context.value) return;
 
   const isLeftClick = event.button === 0;
@@ -200,12 +224,21 @@ function handleMouseDown(event: MouseEvent) {
     const tool = tools.value.select;
 
     if (tool.selectState === "selected") {
-      const [x, y, w, h] = tool.selectionRect;
-      if (offsetX >= x && offsetX <= x + w && offsetY >= y && offsetY <= y + h) {
+      if (isPointInSelection(offsetX, offsetY)) {
         tool.selectState = "moving";
-        tool.moveOffset = [offsetX - x, offsetY - y];
-        return;
+        const translateX = tool.selectionRect[0] + tool.selectionRect[2] / 2;
+        const translateY = tool.selectionRect[1] + tool.selectionRect[3] / 2;
+
+        return void (tool.startInteractionData = {
+          startMouseX: offsetX,
+          startMouseY: offsetY,
+          startRect: { ...tool.selectionRect },
+          startAngle: tool.rotationAngle,
+          startDistance: Math.hypot(offsetX - translateX, offsetY - translateY),
+          startMouseAngle: Math.atan2(offsetY - translateY, offsetX - translateX)
+        });
       }
+
       stampSelection();
     }
 
@@ -215,22 +248,50 @@ function handleMouseDown(event: MouseEvent) {
   }
 }
 
+function isPointInSelection(x: number, y: number) {
+  if (!canvas.value || !context.value) return false;
+  const tool = tools.value.select;
+
+  if (!tool.selectionCanvas) return false;
+  const [selectionX, selectionY, selectionWidth, selectionHeight] = tool.selectionRect;
+  const translateX = selectionX + selectionWidth / 2;
+  const translateY = selectionY + selectionHeight / 2;
+
+  const distanceX = x - translateX;
+  const distanceY = y - translateY;
+
+  const rotateX = distanceX * Math.cos(-tool.rotationAngle) - distanceY * Math.sin(-tool.rotationAngle);
+  const rotateY = distanceX * Math.sin(-tool.rotationAngle) + distanceY * Math.cos(-tool.rotationAngle);
+
+  return rotateX >= -selectionWidth / 2 && rotateX <= selectionWidth / 2 && rotateY >= -selectionHeight / 2 && rotateY <= selectionHeight / 2;
+}
+
 function stampSelection() {
   if (!canvas.value || !context.value) return;
   const tool = tools.value.select;
 
-  if (tool.selectedImageData) {
+  if (tool.selectionCanvas) {
     context.value.fillStyle = currentColor.value.secondary;
     context.value.fillRect(...tool.previousSelectionRect);
-    const [x, y] = tool.selectionRect;
-    context.value.putImageData(tool.selectedImageData, x, y);
-    tool.selectedImageData = null;
+
+    const [x, y, width, height] = tool.selectionRect;
+    const translateX = x + width / 2;
+    const translateY = y + height / 2;
+
+    context.value.save();
+    context.value.translate(translateX, translateY);
+    context.value.rotate(tool.rotationAngle);
+    context.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
+
+    context.value.restore();
+    tool.selectionCanvas = null;
     saveHistory();
   }
 
   tool.selectState = "idle";
   tool.selectionRect = [0, 0, 0, 0];
   tool.previousSelectionRect = [0, 0, 0, 0];
+  tool.rotationAngle = 0;
 }
 watch(currentTool, (newTool) => {
   if (newTool !== "select") stampSelection();
@@ -262,7 +323,13 @@ function captureSelection() {
 
   tool.selectionRect = [selectionX, selectionY, selectionWidth, selectionHeight];
   tool.previousSelectionRect = [...tool.selectionRect];
-  tool.selectedImageData = context.value.getImageData(selectionX, selectionY, selectionWidth, selectionHeight);
+  const imageData = context.value.getImageData(selectionX, selectionY, selectionWidth, selectionHeight);
+
+  tool.selectionCanvas = document.createElement("canvas");
+  tool.selectionCanvas.width = selectionWidth;
+  tool.selectionCanvas.height = selectionHeight;
+  tool.selectionCanvas.getContext("2d")!.putImageData(imageData, 0, 0);
+
   context.value.clearRect(selectionX, selectionY, selectionWidth, selectionHeight);
   tool.selectState = "selected";
 }
@@ -281,19 +348,52 @@ function handleMouseMove(event: MouseEvent) {
   const { offsetX, offsetY } = event;
 
   const select = tools.value.select;
+  const isManipulating = ["moving", "rotating", "resizing"].includes(select.selectState);
+
   if (select.selectState === "selecting") {
     select.selectionRect[2] = offsetX - select.selectionRect[0];
     select.selectionRect[3] = offsetY - select.selectionRect[1];
-  } else if (select.selectState === "moving") {
-    select.selectionRect[0] = offsetX - select.moveOffset[0];
-    select.selectionRect[1] = offsetY - select.moveOffset[1];
+  } else if (isManipulating) {
+    if (!select.startInteractionData) return;
+
+    if (event.shiftKey) select.selectState = "rotating";
+    else if (event.ctrlKey || event.metaKey) select.selectState = "resizing";
+    else select.selectState = "moving";
+
+    const { startMouseX, startMouseY, startRect, startAngle, startDistance, startMouseAngle } = select.startInteractionData;
+    const translateX = startRect[0] + startRect[2] / 2;
+    const translateY = startRect[1] + startRect[3] / 2;
+
+    if (select.selectState === "moving") {
+      const distanceX = offsetX - startMouseX;
+      const distanceY = offsetY - startMouseY;
+      select.selectionRect[0] = startRect[0] + distanceX;
+      select.selectionRect[1] = startRect[1] + distanceY;
+    } else if (select.selectState === "rotating") {
+      const currentMouseAngle = Math.atan2(offsetY - translateY, offsetX - translateX);
+      select.rotationAngle = startAngle + (currentMouseAngle - startMouseAngle);
+    } else if (select.selectState === "resizing") {
+      const currentDistance = Math.hypot(offsetX - translateX, offsetY - translateY);
+      const scale = currentDistance / startDistance;
+
+      if (scale > 0.05) {
+        const newX = startRect[2] * scale;
+        const newY = startRect[3] * scale;
+        select.selectionRect[2] = newX;
+        select.selectionRect[3] = newY;
+        select.selectionRect[0] = translateX - newX / 2;
+        select.selectionRect[1] = translateY - newY / 2;
+      }
+    }
   }
 
-  if (select.selectState !== "selected") return;
+  if (!isManipulating) return;
 
-  const [x, y, width, height] = select.selectionRect;
-  if (offsetX >= x && offsetX <= x + width && offsetY >= y && offsetY <= y + height) document.body.style.cursor = "move";
-  else document.body.style.cursor = "crosshair";
+  if (select.selectState === "moving") {
+    const [x, y] = select.selectionRect;
+    if (isPointInSelection(x, y)) document.body.style.cursor = "move";
+    else document.body.style.cursor = "crosshair";
+  }
 }
 
 function handleMouseUp() {
@@ -310,7 +410,10 @@ function handleMouseUp() {
 
   const select = tools.value.select;
   if (select.selectState === "selecting") captureSelection();
-  else if (select.selectState === "moving") select.selectState = "selected";
+  else if (["moving", "rotating", "resizing"].includes(select.selectState)) {
+    select.selectState = "selected";
+    select.startInteractionData = null;
+  }
 }
 </script>
 
