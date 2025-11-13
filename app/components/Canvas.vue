@@ -50,11 +50,12 @@ onMounted(() => {
 
 function drawLoop() {
   requestAnimationFrame(drawLoop);
-  if (!overlayContext.value || !overlayCanvas.value || currentTool.value !== "select") return;
+  if (!overlayContext.value || !overlayCanvas.value) return;
 
   const { width, height } = overlayCanvas.value;
   overlayContext.value.clearRect(0, 0, width, height);
 
+  if (currentTool.value !== "select") return;
   const tool = tools.value.select;
 
   overlayContext.value.strokeStyle = "rgba(0, 0, 0, 0.8)";
@@ -231,6 +232,9 @@ function stampSelection() {
   tool.selectionRect = [0, 0, 0, 0];
   tool.previousSelectionRect = [0, 0, 0, 0];
 }
+watch(currentTool, (newTool) => {
+  if (newTool !== "select") stampSelection();
+});
 
 function captureSelection() {
   if (!canvas.value || !context.value) return;
