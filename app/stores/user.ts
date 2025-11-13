@@ -32,7 +32,10 @@ export const useUserStore = defineStore("userStore", () => {
       rotationAngle: 0,
       selectionCanvas: null,
       startInteractionData: null
-    } as Select
+    } as Select,
+    eyedropper: {
+      type: "eyedropper"
+    } as Eyedropper
   }) satisfies Reactive<Record<ToolType, Tool>>;
 
   const isDrawing = computed(() => {

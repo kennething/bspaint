@@ -34,6 +34,9 @@ export interface Select extends Tool {
     startMouseAngle: number;
   } | null;
 }
+export interface Eyedropper extends Tool {
+  type: "eyedropper";
+}
 
-const tools = ["brush", "fill", "eraser", "select"] as const;
+const tools = ["brush", "fill", "eraser", "select", "eyedropper"] as const;
 export type ToolType = (typeof tools)[number];

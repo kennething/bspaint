@@ -135,7 +135,7 @@ onMounted(() => window.addEventListener("keydown", handleKeybinds));
 onUnmounted(() => window.removeEventListener("keydown", handleKeybinds));
 
 function changeCursor(event: KeyboardEvent) {
-  if (currentTool.value !== "select" && !(event.shiftKey || event.ctrlKey || event.metaKey)) return;
+  if (currentTool.value !== "select") return;
 
   if (event.shiftKey) document.body.style.cursor = "alias";
   else if (event.ctrlKey || event.metaKey) document.body.style.cursor = "nwse-resize";
@@ -152,9 +152,10 @@ function handleZoom(event: WheelEvent) {
 
   const minScale = 0.1;
   const maxScale = 8;
+  const scaleSpeed = canvasScale.value >= 4 ? 0.1 : canvasScale.value >= 2 ? 0.05 : 0.025;
 
-  if (event.deltaY < 0) canvasScale.value = Math.min(canvasScale.value + 0.025, maxScale);
-  else canvasScale.value = Math.max(canvasScale.value - 0.025, minScale);
+  if (event.deltaY < 0) canvasScale.value = Math.min(canvasScale.value + scaleSpeed, maxScale);
+  else canvasScale.value = Math.max(canvasScale.value - scaleSpeed, minScale);
 }
 onMounted(() => window.addEventListener("wheel", handleZoom, { passive: false }));
 onUnmounted(() => window.removeEventListener("wheel", handleZoom));
@@ -246,6 +247,20 @@ function handleMouseDown(event: MouseEvent): void {
     tool.selectionRect = [offsetX, offsetY, 0, 0];
     return;
   }
+
+  if (currentTool.value === "eyedropper") {
+    const { offsetX, offsetY } = event;
+    const imageData = context.value.getImageData(offsetX, offsetY, 1, 1);
+    const data = imageData.data;
+    const [r, g, b] = [data[0], data[1], data[2]];
+
+    const hexColor = `#${((1 << 24) + ((r ?? 0) << 16) + ((g ?? 0) << 8) + (b ?? 0)).toString(16).slice(1)}`;
+    if (isLeftClick) currentColor.value.primary = hexColor;
+    else currentColor.value.secondary = hexColor;
+
+    currentTool.value = "brush";
+    return;
+  }
 }
 
 function isPointInSelection(x: number, y: number) {
@@ -335,7 +350,7 @@ function captureSelection() {
 }
 
 function handleMouseMove(event: MouseEvent) {
-  if (!context.value || currentTool.value === "fill") return;
+  if (!context.value || ["fill", "eyedropper"].includes(currentTool.value)) return;
 
   if (currentTool.value === "brush" || currentTool.value === "eraser") {
     if (!isDrawing.value) return;
@@ -397,7 +412,7 @@ function handleMouseMove(event: MouseEvent) {
 }
 
 function handleMouseUp() {
-  if (currentTool.value === "fill") return;
+  if (["fill", "eyedropper"].includes(currentTool.value)) return;
 
   if (currentTool.value === "brush" || currentTool.value === "eraser") {
     if (!isDrawing.value) return;
