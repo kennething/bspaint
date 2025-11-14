@@ -67,6 +67,7 @@ function handleKeybinds(event: KeyboardEvent): void {
     const current = currentTool.value;
     currentTool.value = previousTool.value;
     previousTool.value = current;
+    event.preventDefault();
     return;
   }
 
