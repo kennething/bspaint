@@ -2,8 +2,7 @@ import type { Reactive } from "vue";
 import type { Tool } from "~/utils/tools";
 
 export const useUserStore = defineStore("userStore", () => {
-  const canvasScale = ref(1);
-  const canvasSize = ref<[width: number, height: number]>([1920, 1080]);
+  const canvasSize = ref<[width: number, height: number]>([500, 500]);
 
   const currentColor = reactive({
     primary: "#000000",
@@ -59,5 +58,5 @@ export const useUserStore = defineStore("userStore", () => {
   const redoEvent = ref(false);
   const resetEvent = ref(false);
 
-  return { canvasScale, canvasSize, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
+  return { canvasSize, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
 });

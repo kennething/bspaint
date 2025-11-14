@@ -3,20 +3,6 @@
     class="flex w-30 -translate-y-1/2 cursor-auto flex-col items-center justify-center gap-2 rounded-r-xl bg-white/75 p-4 pt-10 pb-12 transition-opacity duration-500 select-none *:select-none"
     :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
   >
-    <div class="du-tooltip mb-2" :data-tip="`Zoom: ${canvasScale}x`">
-      <label for="canvas-scale" class="sr-only">Zoom Level</label>
-      <input
-        id="canvas-scale"
-        class="du-range du-range-xs text-blue-400 [--range-bg:cyan] [--range-fill:0] [--range-thumb:blue]"
-        type="range"
-        min="0.25"
-        max="8"
-        step="0.25"
-        v-model="canvasScale"
-        tabindex="-1"
-      />
-    </div>
-
     <div class="mb-2 flex items-center justify-center gap-2">
       <ToolbarButton :can-do-action="canUndo" :is-doing-action="!!isUndoing" @clicked="isUndoing = Symbol(0)" tooltip="Undo (Ctrl+Z)" icon="undo" />
       <ToolbarButton :can-do-action="canRedo" :is-doing-action="!!isRedoing" @clicked="isRedoing = Symbol(0)" tooltip="Redo (Ctrl+Y)" icon="redo" />
@@ -48,7 +34,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, currentTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI, canvasScale } = storeToRefs(userStore);
+const { currentColor, currentTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI } = storeToRefs(userStore);
 
 const canUndo = computed(() => history.value.length > 0 && historyIndex.value > 0);
 const canRedo = computed(() => history.value.length > 0 && historyIndex.value < history.value.length - 1);

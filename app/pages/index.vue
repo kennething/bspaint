@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full min-h-dvh w-full min-w-dvw items-start justify-start p-60">
+  <div class="flex h-full min-h-dvh w-full min-w-dvw items-start justify-start pt-30 pl-60">
     <Teleport to="body">
       <Toolbar class="fixed top-1/2 left-0 z-100" />
 
@@ -8,7 +8,7 @@
       </Transition>
 
       <button
-        class="fixed bottom-0 left-0 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition hover:bg-red-200"
+        class="fixed bottom-0 left-0 z-100 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition hover:bg-red-200"
         :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
         @click="isCreatingNewCanvas = !isCreatingNewCanvas"
       >
@@ -51,8 +51,8 @@ const userStore = useUserStore();
 const { canvasSize, currentTool, resetEvent, isTransparentUI } = storeToRefs(userStore);
 
 const isCreatingNewCanvas = ref(false);
-const width = ref(1920);
-const height = ref(1080);
+const width = ref(500);
+const height = ref(500);
 
 onMounted(() =>
   watch(

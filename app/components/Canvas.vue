@@ -1,9 +1,10 @@
 <template>
+  <button class="absolute top-0 left-0 hidden" ref="outer"></button>
   <div class="relative">
     <canvas
       ref="canvas"
-      width="1920"
-      height="1080"
+      width="500"
+      height="500"
       class="canvas"
       :style="{ transform: `scale(${canvasScale})`, backgroundColor: currentColor.secondary }"
       @mousedown="handleMouseDown"
@@ -15,18 +16,21 @@
       @mouseup.right="handleMouseUp"
       @mouseleave.right="handleMouseUp"
     ></canvas>
-    <canvas ref="overlay-canvas" width="1920" height="1080" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-60 pb-60" :style="{ transform: `scale(${canvasScale})` }"></canvas>
+    <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30" :style="{ transform: `scale(${canvasScale})` }"></canvas>
   </div>
 </template>
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, canvasSize, currentTool, tools, isDrawing, canvasScale, history, historyIndex, undoEvent, redoEvent, resetEvent } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent } = storeToRefs(userStore);
 
+const outer = useTemplateRef("outer");
 const canvas = useTemplateRef("canvas");
 const context = ref<CanvasRenderingContext2D | null>(null);
 const overlayCanvas = useTemplateRef("overlay-canvas");
 const overlayContext = ref<CanvasRenderingContext2D | null>(null);
+
+const canvasScale = ref(1);
 
 onMounted(() => {
   if (!canvas.value || !overlayCanvas.value) return;
@@ -224,6 +228,7 @@ function handleZoom(event: WheelEvent) {
 
   if (event.deltaY < 0) canvasScale.value = Math.round(Math.min(canvasScale.value + scaleSpeed, maxScale) * 100) / 100;
   else canvasScale.value = Math.round(Math.max(canvasScale.value - scaleSpeed, minScale) * 100) / 100;
+  outer.value?.focus();
 }
 onMounted(() => window.addEventListener("wheel", handleZoom, { passive: false }));
 onUnmounted(() => window.removeEventListener("wheel", handleZoom));
