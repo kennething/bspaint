@@ -11,6 +11,7 @@
         class="fixed bottom-0 left-0 z-100 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition hover:bg-red-200"
         :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
         @click="isCreatingNewCanvas = !isCreatingNewCanvas"
+        tabindex="-1"
       >
         New Canvas
       </button>

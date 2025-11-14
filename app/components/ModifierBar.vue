@@ -50,7 +50,7 @@
 
       <div class="flex flex-col items-start justify-center gap-1">
         <label for="font-family" class="text-xs text-neutral-700">Font Family</label>
-        <select class="du-select du-select-xs w-30 text-nowrap dark:text-neutral-200 dark:*:text-neutral-200" name="font-family" id="font-family" v-model="tools.text.fontFamily">
+        <select class="du-select du-select-xs w-30 text-nowrap dark:text-neutral-200 dark:*:text-neutral-200" name="font-family" id="font-family" v-model="tools.text.fontFamily" tabindex="-1">
           <option
             class="text-lg"
             v-for="font in fonts"
