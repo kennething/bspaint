@@ -17,6 +17,23 @@
       @mouseleave.right="handleMouseUp"
     ></canvas>
     <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30" :style="{ transform: `scale(${canvasScale})` }"></canvas>
+    <input
+      type="text"
+      ref="text-tool-input"
+      v-if="currentTool === 'text' && tools.text.isTyping"
+      v-model="tools.text.currentText"
+      @blur="stampText"
+      @keydown.enter="stampText"
+      class="pointer-events-none absolute outline-0"
+      :style="{
+        top: `${tools.text.textInputPosition[1]}px`,
+        left: `${tools.text.textInputPosition[0]}px`,
+        color: tools.text.isLeftClick ? currentColor.primary : currentColor.secondary,
+        fontSize: `${tools.text.fontSize}px`,
+        fontFamily: `'${tools.text.fontFamily}'`,
+        maxWidth: `${canvasSize[0] - tools.text.textInputPosition[0]}px`
+      }"
+    />
   </div>
 </template>
 
@@ -31,6 +48,8 @@ const overlayCanvas = useTemplateRef("overlay-canvas");
 const overlayContext = ref<CanvasRenderingContext2D | null>(null);
 
 const canvasScale = ref(1);
+
+const textToolInput = useTemplateRef("text-tool-input");
 
 onMounted(() => {
   if (!canvas.value || !overlayCanvas.value) return;
@@ -109,6 +128,7 @@ function drawLoop() {
   overlayContext.value.setLineDash([]);
 }
 
+////// history ///////
 function saveHistory() {
   if (!canvas.value) return;
   const dataUrl = canvas.value.toDataURL();
@@ -155,7 +175,10 @@ watch(redoEvent, async (newVal) => {
   redoEvent.value = false;
 });
 
+/////// event handlers ////////
 async function handleKeybinds(event: KeyboardEvent) {
+  if (currentTool.value === "text" && tools.value.text.isTyping) return;
+
   if (currentTool.value === "select" && event.key === "Backspace") {
     stampSelection(false);
     return event.preventDefault();
@@ -207,6 +230,8 @@ onMounted(() => window.addEventListener("keydown", handleKeybinds));
 onUnmounted(() => window.removeEventListener("keydown", handleKeybinds));
 
 function changeCursor(event: KeyboardEvent) {
+  if (currentTool.value === "text" && tools.value.text.isTyping) return;
+
   if (currentTool.value !== "select") return (document.body.style.cursor = getCursorStyle(currentTool.value));
 
   if (event.shiftKey) document.body.style.cursor = "alias";
@@ -239,6 +264,7 @@ function preventRightClick(event: MouseEvent) {
 onMounted(() => window.addEventListener("contextmenu", preventRightClick));
 onUnmounted(() => window.removeEventListener("contextmenu", preventRightClick));
 
+/////// mouse events ///////
 function handleMouseDown(event: MouseEvent): void {
   if (!canvas.value || !context.value) return;
 
@@ -334,8 +360,102 @@ function handleMouseDown(event: MouseEvent): void {
     currentTool.value = "brush";
     return;
   }
+
+  if (currentTool.value === "text") {
+    stampText();
+
+    const tool = tools.value.text;
+    tool.isTyping = true;
+    tool.currentText = "";
+    tool.textInputPosition = [event.offsetX, event.offsetY];
+    tool.isLeftClick = isLeftClick;
+    return;
+  }
 }
 
+function handleMouseMove(event: MouseEvent): void {
+  if (!context.value || ["fill", "eyedropper", "text"].includes(currentTool.value)) return;
+
+  if (currentTool.value === "brush" || currentTool.value === "eraser") {
+    if (!isDrawing.value) return;
+
+    context.value.lineTo(event.offsetX, event.offsetY);
+    context.value.stroke();
+    return;
+  }
+
+  const { offsetX, offsetY } = event;
+
+  const select = tools.value.select;
+  const isManipulating = ["moving", "rotating", "resizing"].includes(select.selectState);
+
+  if (select.selectState === "selecting") {
+    select.selectionRect[2] = offsetX - select.selectionRect[0];
+    select.selectionRect[3] = offsetY - select.selectionRect[1];
+  } else if (isManipulating) {
+    if (!select.startInteractionData) return;
+
+    if (event.shiftKey) select.selectState = "rotating";
+    else if (event.ctrlKey || event.metaKey) select.selectState = "resizing";
+    else select.selectState = "moving";
+
+    const { startMouseX, startMouseY, startRect, startAngle, startDistance, startMouseAngle } = select.startInteractionData;
+    const translateX = startRect[0] + startRect[2] / 2;
+    const translateY = startRect[1] + startRect[3] / 2;
+
+    if (select.selectState === "moving") {
+      const distanceX = offsetX - startMouseX;
+      const distanceY = offsetY - startMouseY;
+      select.selectionRect[0] = startRect[0] + distanceX;
+      select.selectionRect[1] = startRect[1] + distanceY;
+    } else if (select.selectState === "rotating") {
+      const currentMouseAngle = Math.atan2(offsetY - translateY, offsetX - translateX);
+      select.rotationAngle = startAngle + (currentMouseAngle - startMouseAngle);
+    } else if (select.selectState === "resizing") {
+      const currentDistance = Math.hypot(offsetX - translateX, offsetY - translateY);
+      const scale = currentDistance / startDistance;
+
+      if (scale > 0.05) {
+        const newX = startRect[2] * scale;
+        const newY = startRect[3] * scale;
+        select.selectionRect[2] = newX;
+        select.selectionRect[3] = newY;
+        select.selectionRect[0] = translateX - newX / 2;
+        select.selectionRect[1] = translateY - newY / 2;
+      }
+    }
+  }
+
+  if (!isManipulating) return;
+
+  if (select.selectState === "moving") {
+    const [x, y] = select.selectionRect;
+    if (isPointInSelection(x, y)) return void (document.body.style.cursor = "move");
+  }
+  document.body.style.cursor = "crosshair";
+}
+
+function handleMouseUp() {
+  if (["fill", "eyedropper", "text"].includes(currentTool.value)) return;
+
+  if (currentTool.value === "brush" || currentTool.value === "eraser") {
+    if (!isDrawing.value) return;
+
+    tools.value.brush.isDrawing = false;
+    tools.value.eraser.isDrawing = false;
+    saveHistory();
+    return;
+  }
+
+  const select = tools.value.select;
+  if (select.selectState === "selecting") captureSelection();
+  else if (["moving", "rotating", "resizing"].includes(select.selectState)) {
+    select.selectState = "selected";
+    select.startInteractionData = null;
+  }
+}
+
+/////// select tool ///////
 function isPointInSelection(x: number, y: number) {
   if (!canvas.value || !context.value) return false;
   const tool = tools.value.select;
@@ -431,87 +551,30 @@ function captureSelection() {
   tool.selectState = "selected";
 }
 
-function handleMouseMove(event: MouseEvent): void {
-  if (!context.value || ["fill", "eyedropper"].includes(currentTool.value)) return;
+/////// text tool ///////
+function stampText() {
+  const tool = tools.value.text;
+  if (!tool.isTyping || !tool.currentText || !context.value) return void (tool.isTyping = false);
 
-  if (currentTool.value === "brush" || currentTool.value === "eraser") {
-    if (!isDrawing.value) return;
+  const [x, y] = tool.textInputPosition;
 
-    context.value.lineTo(event.offsetX, event.offsetY);
-    context.value.stroke();
-    return;
-  }
+  context.value.font = `${tool.fontSize}px '${tool.fontFamily}'`;
+  context.value.fillStyle = tool.isLeftClick ? currentColor.value.primary : currentColor.value.secondary;
+  context.value.textBaseline = "top";
+  context.value.textAlign = "left";
+  context.value.fillText(tool.currentText, x, y);
 
-  const { offsetX, offsetY } = event;
-
-  const select = tools.value.select;
-  const isManipulating = ["moving", "rotating", "resizing"].includes(select.selectState);
-
-  if (select.selectState === "selecting") {
-    select.selectionRect[2] = offsetX - select.selectionRect[0];
-    select.selectionRect[3] = offsetY - select.selectionRect[1];
-  } else if (isManipulating) {
-    if (!select.startInteractionData) return;
-
-    if (event.shiftKey) select.selectState = "rotating";
-    else if (event.ctrlKey || event.metaKey) select.selectState = "resizing";
-    else select.selectState = "moving";
-
-    const { startMouseX, startMouseY, startRect, startAngle, startDistance, startMouseAngle } = select.startInteractionData;
-    const translateX = startRect[0] + startRect[2] / 2;
-    const translateY = startRect[1] + startRect[3] / 2;
-
-    if (select.selectState === "moving") {
-      const distanceX = offsetX - startMouseX;
-      const distanceY = offsetY - startMouseY;
-      select.selectionRect[0] = startRect[0] + distanceX;
-      select.selectionRect[1] = startRect[1] + distanceY;
-    } else if (select.selectState === "rotating") {
-      const currentMouseAngle = Math.atan2(offsetY - translateY, offsetX - translateX);
-      select.rotationAngle = startAngle + (currentMouseAngle - startMouseAngle);
-    } else if (select.selectState === "resizing") {
-      const currentDistance = Math.hypot(offsetX - translateX, offsetY - translateY);
-      const scale = currentDistance / startDistance;
-
-      if (scale > 0.05) {
-        const newX = startRect[2] * scale;
-        const newY = startRect[3] * scale;
-        select.selectionRect[2] = newX;
-        select.selectionRect[3] = newY;
-        select.selectionRect[0] = translateX - newX / 2;
-        select.selectionRect[1] = translateY - newY / 2;
-      }
-    }
-  }
-
-  if (!isManipulating) return;
-
-  if (select.selectState === "moving") {
-    const [x, y] = select.selectionRect;
-    if (isPointInSelection(x, y)) return void (document.body.style.cursor = "move");
-  }
-  document.body.style.cursor = "crosshair";
+  tool.isTyping = false;
+  tool.currentText = "";
+  saveHistory();
 }
 
-function handleMouseUp() {
-  if (["fill", "eyedropper"].includes(currentTool.value)) return;
-
-  if (currentTool.value === "brush" || currentTool.value === "eraser") {
-    if (!isDrawing.value) return;
-
-    tools.value.brush.isDrawing = false;
-    tools.value.eraser.isDrawing = false;
-    saveHistory();
-    return;
+watch(
+  () => tools.value.text.isTyping,
+  async (val) => {
+    if (val) setTimeout(() => textToolInput.value?.focus(), 10);
   }
-
-  const select = tools.value.select;
-  if (select.selectState === "selecting") captureSelection();
-  else if (["moving", "rotating", "resizing"].includes(select.selectState)) {
-    select.selectState = "selected";
-    select.startInteractionData = null;
-  }
-}
+);
 </script>
 
 <style scoped>

@@ -4,7 +4,7 @@
       <Toolbar class="fixed top-1/2 left-0 z-100" />
 
       <Transition>
-        <ModifierBar v-if="['select', 'brush', 'eraser'].includes(currentTool)" class="fixed top-0 left-0 z-100" />
+        <ModifierBar v-if="['select', 'brush', 'eraser', 'text'].includes(currentTool)" class="fixed top-0 left-0 z-100" />
       </Transition>
 
       <button

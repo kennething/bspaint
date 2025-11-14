@@ -52,12 +52,14 @@ watch(isRedoing, (newVal) => {
 
 function handleKeybinds(event: KeyboardEvent): void {
   const key = event.key.toLowerCase();
+  if (currentTool.value === "text" && tools.value.text.isTyping) return;
 
   if (key === "b") return void (currentTool.value = "brush");
   if (key === "f") return void (currentTool.value = "fill");
   if (key === "e") return void (currentTool.value = "eraser");
   if (key === "v") return void (currentTool.value = "select");
   if (key === "i") return void (currentTool.value = "eyedropper");
+  if (key === "t") return void (currentTool.value = "text");
 
   if (event.ctrlKey || event.metaKey) {
     if ((event.shiftKey && key === "z") || key === "y") {

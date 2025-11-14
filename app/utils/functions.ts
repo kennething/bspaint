@@ -4,5 +4,6 @@ export function getCursorStyle(tool: ToolType) {
   if (tool === "fill") return "copy";
   if (tool === "select") return "crosshair";
   if (tool === "eyedropper") return "context-menu";
+  if (tool === "text") return "text";
   return "default";
 }

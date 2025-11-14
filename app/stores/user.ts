@@ -44,7 +44,17 @@ export const useUserStore = defineStore("userStore", () => {
       shortcut: "e",
       radius: 50,
       isDrawing: false
-    } as Eraser
+    } as Eraser,
+    text: {
+      type: "text",
+      shortcut: "t",
+      isTyping: false,
+      isLeftClick: true,
+      currentText: "",
+      textInputPosition: [0, 0],
+      fontSize: 16,
+      fontFamily: "Comic Sans MS"
+    } as TextTool
   }) satisfies Reactive<Record<ToolType, Tool>>;
 
   const isDrawing = computed(() => {

@@ -43,6 +43,16 @@ export interface Eyedropper extends Tool {
   type: "eyedropper";
   shortcut: "i";
 }
+export interface TextTool extends Tool {
+  type: "text";
+  shortcut: "t";
+  isTyping: boolean;
+  isLeftClick: boolean;
+  currentText: string;
+  textInputPosition: [x: number, y: number];
+  fontSize: number;
+  fontFamily: FontFamily;
+}
 
-const tools = ["brush", "fill", "eraser", "select", "eyedropper"] as const;
+const tools = ["brush", "fill", "eraser", "select", "eyedropper", "text"] as const;
 export type ToolType = (typeof tools)[number];
