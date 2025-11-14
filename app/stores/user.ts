@@ -3,6 +3,8 @@ import type { Tool } from "~/utils/tools";
 
 export const useUserStore = defineStore("userStore", () => {
   const canvasScale = ref(1);
+  const canvasSize = ref<[width: number, height: number]>([1920, 1080]);
+
   const currentColor = reactive({
     primary: "#000000",
     secondary: "#ffffff"
@@ -55,6 +57,7 @@ export const useUserStore = defineStore("userStore", () => {
 
   const undoEvent = ref(false);
   const redoEvent = ref(false);
+  const resetEvent = ref(false);
 
-  return { canvasScale, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, isTransparentUI };
+  return { canvasScale, canvasSize, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
 });

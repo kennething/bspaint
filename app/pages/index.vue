@@ -25,16 +25,18 @@
 
           <div class="mt-6 flex grow items-center justify-center gap-2">
             <label for="width" class="shrink-0 text-sm font-medium">Width (px)</label>
-            <input id="width" class="du-input du-input-sm grow dark:text-neutral-200" type="number" v-model="width" />
+            <input id="width" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="width" />
           </div>
           <div class="mt-2 flex grow items-center justify-center gap-2">
             <label for="height" class="shrink-0 text-sm font-medium">Height (px)</label>
-            <input id="height" class="du-input du-input-sm grow dark:text-neutral-200" type="number" v-model="height" />
+            <input id="height" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="height" />
           </div>
 
           <div class="mt-6 flex w-full items-center justify-between gap-2">
-            <button class="grow rounded-xl border-2 border-neutral-200 bg-neutral-200 py-2 text-lg font-semibold transition hover:border-neutral-300 hover:bg-neutral-300">Create</button>
-            <button class="grow rounded-xl border-2 border-neutral-200 py-2 text-lg font-semibold transition hover:bg-neutral-200" @click="isCreatingNewCanvas = false">Wait No</button>
+            <button class="grow rounded-xl border-2 border-neutral-200 bg-neutral-200 py-2 text-lg font-semibold transition hover:border-neutral-300 hover:bg-neutral-300" @click="createNew(true)">
+              Create
+            </button>
+            <button class="grow rounded-xl border-2 border-neutral-200 py-2 text-lg font-semibold transition hover:bg-neutral-200" @click="createNew(false)">Wait No</button>
           </div>
         </div>
       </Transition>
@@ -46,7 +48,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentTool, isTransparentUI } = storeToRefs(userStore);
+const { canvasSize, currentTool, resetEvent, isTransparentUI } = storeToRefs(userStore);
 
 const isCreatingNewCanvas = ref(false);
 const width = ref(1920);
@@ -61,6 +63,19 @@ onMounted(() =>
     { immediate: true }
   )
 );
+
+function createNew(confirm: boolean) {
+  if (confirm) {
+    const boundedWidth = Math.max(1, Math.min(9999, Math.floor(width.value)));
+    const boundedHeight = Math.max(1, Math.min(9999, Math.floor(height.value)));
+    canvasSize.value = [boundedWidth, boundedHeight];
+    resetEvent.value = true;
+  }
+
+  isCreatingNewCanvas.value = false;
+  width.value = canvasSize.value[0];
+  height.value = canvasSize.value[1];
+}
 </script>
 
 <style scoped>

@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, currentTool, tools, isDrawing, canvasScale, history, historyIndex, undoEvent, redoEvent } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, canvasScale, history, historyIndex, undoEvent, redoEvent, resetEvent } = storeToRefs(userStore);
 
 const canvas = useTemplateRef("canvas");
 const context = ref<CanvasRenderingContext2D | null>(null);
@@ -43,6 +43,33 @@ onMounted(() => {
   context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);
   saveHistory();
   drawLoop();
+});
+
+watch(resetEvent, async (val) => {
+  if (!val) return;
+
+  if (!canvas.value || !context.value || !overlayCanvas.value || !overlayContext.value) return;
+  context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
+  history.value = [];
+  historyIndex.value = -1;
+
+  currentTool.value = "brush";
+  canvasScale.value = 1;
+
+  canvas.value.width = canvasSize.value[0];
+  canvas.value.height = canvasSize.value[1];
+  overlayCanvas.value.width = canvasSize.value[0];
+  overlayCanvas.value.height = canvasSize.value[1];
+
+  context.value.lineCap = "round";
+  context.value.lineJoin = "round";
+  context.value.fillStyle = "white";
+  context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);
+  saveHistory();
+
+  await nextTick();
+  resetEvent.value = false;
 });
 
 function drawLoop() {
@@ -191,12 +218,12 @@ function handleZoom(event: WheelEvent) {
   if (!canvas.value || !(event.ctrlKey || event.metaKey)) return;
   event.preventDefault();
 
-  const minScale = 0.1;
+  const minScale = 0.25;
   const maxScale = 8;
   const scaleSpeed = canvasScale.value >= 4 ? 0.1 : canvasScale.value >= 2 ? 0.05 : 0.025;
 
-  if (event.deltaY < 0) canvasScale.value = Math.min(canvasScale.value + scaleSpeed, maxScale);
-  else canvasScale.value = Math.max(canvasScale.value - scaleSpeed, minScale);
+  if (event.deltaY < 0) canvasScale.value = Math.round(Math.min(canvasScale.value + scaleSpeed, maxScale) * 100) / 100;
+  else canvasScale.value = Math.round(Math.max(canvasScale.value - scaleSpeed, minScale) * 100) / 100;
 }
 onMounted(() => window.addEventListener("wheel", handleZoom, { passive: false }));
 onUnmounted(() => window.removeEventListener("wheel", handleZoom));
