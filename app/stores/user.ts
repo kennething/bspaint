@@ -9,6 +9,7 @@ export const useUserStore = defineStore("userStore", () => {
     secondary: "#ffffff"
   });
   const currentTool = ref<ToolType>("brush");
+  const previousTool = ref<ToolType>("brush");
 
   const history = ref<string[]>([]);
   const historyIndex = ref(-1);
@@ -68,5 +69,5 @@ export const useUserStore = defineStore("userStore", () => {
   const redoEvent = ref(false);
   const resetEvent = ref(false);
 
-  return { canvasSize, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
+  return { canvasSize, currentColor, currentTool, previousTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
 });

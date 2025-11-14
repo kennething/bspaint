@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, currentTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI } = storeToRefs(userStore);
+const { currentColor, currentTool, previousTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI } = storeToRefs(userStore);
 
 const canUndo = computed(() => history.value.length > 0 && historyIndex.value > 0);
 const canRedo = computed(() => history.value.length > 0 && historyIndex.value < history.value.length - 1);
@@ -60,6 +60,12 @@ function handleKeybinds(event: KeyboardEvent): void {
   if (key === "v") return void (currentTool.value = "select");
   if (key === "i") return void (currentTool.value = "eyedropper");
   if (key === "t") return void (currentTool.value = "text");
+  if (key === " ") {
+    const current = currentTool.value;
+    currentTool.value = previousTool.value;
+    previousTool.value = current;
+    return;
+  }
 
   if (event.ctrlKey || event.metaKey) {
     if ((event.shiftKey && key === "z") || key === "y") {
@@ -74,6 +80,11 @@ function handleKeybinds(event: KeyboardEvent): void {
 }
 onMounted(() => window.addEventListener("keydown", handleKeybinds));
 onUnmounted(() => window.removeEventListener("keydown", handleKeybinds));
+
+watch(currentTool, (newTool, oldTool) => {
+  if (newTool === oldTool) return;
+  previousTool.value = oldTool;
+});
 </script>
 
 <style scoped></style>
