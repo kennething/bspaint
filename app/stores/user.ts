@@ -62,12 +62,12 @@ export const useUserStore = defineStore("userStore", () => {
     const tool = tools[currentTool.value];
     return "isDrawing" in tool && tool.isDrawing;
   });
-
   const isTransparentUI = computed(() => tools.brush.isDrawing || tools.eraser.isDrawing || ["selecting", "moving", "rotating", "resizing"].includes(tools.select.selectState));
+  const isSelectingFont = ref(false);
 
   const undoEvent = ref(false);
   const redoEvent = ref(false);
   const resetEvent = ref(false);
 
-  return { canvasSize, currentColor, currentTool, previousTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI };
+  return { canvasSize, currentColor, currentTool, previousTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI, isSelectingFont };
 });
