@@ -5,9 +5,10 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   css: ["~/assets/main.css"],
+  modules: ["@pinia/nuxt"],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss()]
   },
 
   app: {
@@ -19,11 +20,9 @@ export default defineNuxtConfig({
         { name: "mobile-web-app-capable", content: "yes" },
         { name: "author", content: "Kenneth Ng" },
         { property: "og:title", content: "BS Paint" },
-        { property: "og:site_name", content: "BS Paint" },
+        { property: "og:site_name", content: "BS Paint" }
       ],
-      // link: [{ rel: "icon", type: "image/svg+xml", href: "/bscode.svg" }],
-    },
-  },
-
-  modules: ["@pinia/nuxt"],
+      link: [{ rel: "icon", type: "image/svg+xml", href: "/bspaint.svg" }]
+    }
+  }
 });

@@ -21,15 +21,12 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, currentTool, tools, isDrawing, canvasScale } = storeToRefs(userStore);
+const { currentColor, currentTool, tools, isDrawing, canvasScale, history, historyIndex, undoEvent, redoEvent } = storeToRefs(userStore);
 
 const canvas = useTemplateRef("canvas");
 const context = ref<CanvasRenderingContext2D | null>(null);
 const overlayCanvas = useTemplateRef("overlay-canvas");
 const overlayContext = ref<CanvasRenderingContext2D | null>(null);
-
-const history = ref<string[]>([]);
-const historyIndex = ref(-1);
 
 onMounted(() => {
   if (!canvas.value || !overlayCanvas.value) return;
@@ -110,12 +107,22 @@ function undo() {
   historyIndex.value--;
   restoreHistoryState();
 }
+watch(undoEvent, async (newVal) => {
+  if (newVal) undo();
+  await nextTick();
+  undoEvent.value = false;
+});
 
 function redo() {
   if (historyIndex.value >= history.value.length - 1) return;
   historyIndex.value++;
   restoreHistoryState();
 }
+watch(redoEvent, async (newVal) => {
+  if (newVal) redo();
+  await nextTick();
+  redoEvent.value = false;
+});
 
 async function handleKeybinds(event: KeyboardEvent) {
   if (currentTool.value === "select" && event.key === "Backspace") {
@@ -160,15 +167,9 @@ async function handleKeybinds(event: KeyboardEvent) {
       image.src = URL.createObjectURL(data);
       return event.preventDefault();
     }
-    if ((event.shiftKey && event.key === "z") || event.key === "y") {
-      redo();
-      return event.preventDefault();
-    }
-    if (event.key === "z") {
-      if (currentTool.value === "select" && ["selected", "moving"].includes(tools.value.select.selectState)) stampSelection();
-      undo();
-      return event.preventDefault();
-    }
+
+    if (event.key === "z" && currentTool.value === "select" && ["selected", "moving"].includes(tools.value.select.selectState)) stampSelection();
+    // * the rest of undo/redo is in Toolbar.vue
   }
 }
 onMounted(() => window.addEventListener("keydown", handleKeybinds));
@@ -382,6 +383,12 @@ function captureSelection() {
   tool.selectionRect = [selectionX, selectionY, selectionWidth, selectionHeight];
   tool.previousSelectionRect = [...tool.selectionRect];
   const imageData = context.value.getImageData(selectionX, selectionY, selectionWidth, selectionHeight);
+  if (tool.isTransparent) {
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const [r, g, b] = [imageData.data[i], imageData.data[i + 1], imageData.data[i + 2]];
+      if (r === 255 && g === 255 && b === 255) imageData.data[i + 3] = 0;
+    }
+  }
 
   tool.selectionCanvas = document.createElement("canvas");
   tool.selectionCanvas.width = selectionWidth;

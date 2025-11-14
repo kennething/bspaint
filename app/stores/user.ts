@@ -9,23 +9,14 @@ export const useUserStore = defineStore("userStore", () => {
   });
   const currentTool = ref<ToolType>("brush");
 
+  const history = ref<string[]>([]);
+  const historyIndex = ref(-1);
+
   const tools = reactive({
-    brush: {
-      type: "brush",
-      radius: 5,
-      isDrawing: false
-    } as Brush,
-    fill: {
-      type: "fill"
-    } as Fill,
-    eraser: {
-      type: "eraser",
-      radius: 5,
-      isDrawing: false
-    } as Eraser,
     select: {
       type: "select",
-      isTransparent: false,
+      shortcut: "v",
+      isTransparent: true,
       selectState: "idle",
       selectionRect: [0, 0, 0, 0],
       previousSelectionRect: [0, 0, 0, 0],
@@ -33,9 +24,26 @@ export const useUserStore = defineStore("userStore", () => {
       selectionCanvas: null,
       startInteractionData: null
     } as Select,
+    brush: {
+      type: "brush",
+      shortcut: "b",
+      radius: 5,
+      isDrawing: false
+    } as Brush,
+    fill: {
+      type: "fill",
+      shortcut: "f"
+    } as Fill,
     eyedropper: {
-      type: "eyedropper"
-    } as Eyedropper
+      type: "eyedropper",
+      shortcut: "i"
+    } as Eyedropper,
+    eraser: {
+      type: "eraser",
+      shortcut: "e",
+      radius: 50,
+      isDrawing: false
+    } as Eraser
   }) satisfies Reactive<Record<ToolType, Tool>>;
 
   const isDrawing = computed(() => {
@@ -43,5 +51,10 @@ export const useUserStore = defineStore("userStore", () => {
     return "isDrawing" in tool && tool.isDrawing;
   });
 
-  return { canvasScale, currentColor, currentTool, tools, isDrawing };
+  const isTransparentUI = computed(() => tools.brush.isDrawing || tools.eraser.isDrawing || ["selecting", "moving", "rotating", "resizing"].includes(tools.select.selectState));
+
+  const undoEvent = ref(false);
+  const redoEvent = ref(false);
+
+  return { canvasScale, currentColor, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, isTransparentUI };
 });
