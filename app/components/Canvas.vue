@@ -17,29 +17,37 @@
       @mouseleave.right="handleMouseUp"
     ></canvas>
     <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30" :style="{ transform: `scale(${canvasScale})` }"></canvas>
-    <input
-      type="text"
-      ref="text-tool-input"
+    <div
+      class="canvas absolute top-0 left-0"
       v-if="currentTool === 'text' && tools.text.isTyping"
-      v-model="tools.text.currentText"
-      @blur="stampText"
-      @keydown.enter="stampText"
-      class="pointer-events-none absolute outline-0"
       :style="{
-        top: `${tools.text.textInputPosition[1]}px`,
-        left: `${tools.text.textInputPosition[0]}px`,
-        color: tools.text.isLeftClick ? currentColor.primary : currentColor.secondary,
-        fontSize: `${tools.text.fontSize}px`,
-        fontFamily: `'${tools.text.fontFamily}'`,
-        maxWidth: `${canvasSize[0] - tools.text.textInputPosition[0]}px`
+        height: `${tools.text.textInputPosition[1]}px`,
+        width: `${tools.text.textInputPosition[0]}px`,
+        transform: `scale(${canvasScale})`
       }"
-    />
+    >
+      <input
+        type="text"
+        ref="text-tool-input"
+        v-model="tools.text.currentText"
+        @blur="stampText"
+        @keydown.enter="stampText"
+        class="pointer-events-none absolute right-0 bottom-0 outline-0"
+        :style="{
+          color: tools.text.isLeftClick ? currentColor.primary : currentColor.secondary,
+          fontSize: `${tools.text.fontSize}px`,
+          fontFamily: `'${tools.text.fontFamily}'`,
+          width: `${canvasSize[0] - tools.text.textInputPosition[0]}px`,
+          right: `-${canvasSize[0] - tools.text.textInputPosition[0]}px`
+        }"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
 
 const outer = useTemplateRef("outer");
 const canvas = useTemplateRef("canvas");
@@ -177,6 +185,8 @@ watch(redoEvent, async (newVal) => {
 
 /////// event handlers ////////
 async function handleKeybinds(event: KeyboardEvent) {
+  if (!canvas.value) return;
+  if (isInModiferBar.value) return;
   if (currentTool.value === "text" && tools.value.text.isTyping) return;
 
   if (currentTool.value === "select" && event.key === "Backspace") {
@@ -188,7 +198,7 @@ async function handleKeybinds(event: KeyboardEvent) {
     if (currentTool.value === "select" && !["idle", "selecting"].includes(tools.value.select.selectState) && event.key === "c") {
       const image = new Image();
       const tool = tools.value.select;
-      if (!canvas.value || !tool.selectionCanvas) return;
+      if (!tool.selectionCanvas) return;
       image.src = tool.selectionCanvas.toDataURL();
       navigator.clipboard.write([
         new ClipboardItem({
@@ -197,7 +207,7 @@ async function handleKeybinds(event: KeyboardEvent) {
       ]);
       return event.preventDefault();
     }
-    if (event.key === "v" && canvas.value) {
+    if (event.key === "v") {
       currentTool.value = "select";
       const tool = tools.value.select;
       if (tool.selectionCanvas) stampSelection();
@@ -219,6 +229,16 @@ async function handleKeybinds(event: KeyboardEvent) {
         tool.selectState = "selected";
       };
       image.src = URL.createObjectURL(data);
+      return event.preventDefault();
+    }
+    if (event.key === "a") {
+      currentTool.value = "select";
+      const tool = tools.value.select;
+
+      if (tool.selectionCanvas) stampSelection();
+
+      tool.selectionRect = [0, 0, canvas.value.width, canvas.value.height];
+      captureSelection();
       return event.preventDefault();
     }
 

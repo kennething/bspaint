@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, currentTool, previousTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI, isSelectingFont } = storeToRefs(userStore);
+const { currentColor, currentTool, previousTool, tools, history, historyIndex, undoEvent, redoEvent, isTransparentUI, isInModiferBar } = storeToRefs(userStore);
 
 const canUndo = computed(() => history.value.length > 0 && historyIndex.value > 0);
 const canRedo = computed(() => history.value.length > 0 && historyIndex.value < history.value.length - 1);
@@ -52,8 +52,7 @@ watch(isRedoing, (newVal) => {
 
 function handleKeybinds(event: KeyboardEvent): void {
   if (currentTool.value === "text" && tools.value.text.isTyping) return;
-  console.log(isSelectingFont.value);
-  if (isSelectingFont.value) return;
+  if (isInModiferBar.value) return;
 
   const key = event.key.toLowerCase();
 

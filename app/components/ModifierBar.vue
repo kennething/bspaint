@@ -7,7 +7,21 @@
 
     <div v-if="currentTool === 'brush' || currentTool === 'eraser'" class="flex grow px-6">
       <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1" :data-tip="tools[currentTool].radius">
-        <label for="stroke-size" class="text-xs text-neutral-700 capitalize">{{ currentTool }} Size</label>
+        <div>
+          <label for="stroke-size" class="text-xs text-neutral-700 capitalize">{{ currentTool }} Size</label>
+          <input
+            ref="brush-size-number-input"
+            type="number"
+            @focus="isInModiferBar = true"
+            @blur="submitNewBrushSize"
+            @keydown.enter="submitNewBrushSize"
+            class="ms-5 w-10 text-sm"
+            min="1"
+            max="100"
+            v-model="tools[currentTool].radius"
+            tabindex="-1"
+          />
+        </div>
         <input
           id="stroke-size"
           class="du-range du-range-xs text-blue-400 [--range-bg:cyan] [--range-fill:0] [--range-thumb:blue]"
@@ -36,7 +50,21 @@
 
     <div v-else-if="currentTool === 'text'" class="flex grow items-center justify-start gap-4 px-6">
       <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1" :data-tip="tools.text.fontSize">
-        <label for="stroke-size" class="text-xs text-neutral-700">Font Size</label>
+        <div>
+          <label for="stroke-size" class="text-xs text-neutral-700">Font Size</label>
+          <input
+            ref="font-size-number-input"
+            type="number"
+            @focus="isInModiferBar = true"
+            @blur="submitNewFontSize"
+            @keydown.enter="submitNewFontSize"
+            class="ms-5 w-10 text-sm"
+            min="8"
+            max="100"
+            v-model="tools.text.fontSize"
+            tabindex="-1"
+          />
+        </div>
         <input
           id="stroke-size"
           class="du-range du-range-xs text-blue-400 [--range-bg:cyan] [--range-fill:0] [--range-thumb:blue]"
@@ -56,7 +84,7 @@
           id="font-family"
           v-model="tools.text.fontFamily"
           tabindex="-1"
-          @click="isSelectingFont = !isSelectingFont"
+          @click="isInModiferBar = !isInModiferBar"
         >
           <option
             class="text-lg"
@@ -77,13 +105,39 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentTool, tools, isTransparentUI, isSelectingFont } = storeToRefs(userStore);
+const { currentTool, tools, isTransparentUI, isInModiferBar } = storeToRefs(userStore);
 
-watch(isSelectingFont, (val) => console.log(val));
+const brushSizeNumberInput = useTemplateRef("brush-size-number-input");
+const fontSizeNumberInput = useTemplateRef("font-size-number-input");
+
 watch(
   () => tools.value.text.fontFamily,
-  () => (isSelectingFont.value = false)
+  () => (isInModiferBar.value = false)
 );
+
+function submitNewBrushSize() {
+  isInModiferBar.value = false;
+
+  if (currentTool.value !== "brush" && currentTool.value !== "eraser") return;
+  const size = tools.value[currentTool.value].radius;
+
+  if (!size || size < 1) return (tools.value[currentTool.value].radius = 1);
+  if (size > 100) return (tools.value[currentTool.value].radius = 100);
+  tools.value[currentTool.value].radius = size;
+  brushSizeNumberInput.value?.blur();
+}
+
+function submitNewFontSize() {
+  isInModiferBar.value = false;
+
+  if (currentTool.value !== "text") return;
+  const size = tools.value.text.fontSize;
+
+  if (!size || size < 8) return (tools.value.text.fontSize = 8);
+  if (size > 100) return (tools.value.text.fontSize = 100);
+  tools.value.text.fontSize = size;
+  fontSizeNumberInput.value?.blur();
+}
 </script>
 
 <style scoped></style>

@@ -8,7 +8,7 @@
       </Transition>
 
       <button
-        class="fixed bottom-0 left-0 z-100 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition hover:bg-red-200"
+        class="fixed bottom-0 left-0 z-100 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition select-none hover:bg-red-200"
         :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
         @click="isCreatingNewCanvas = !isCreatingNewCanvas"
         tabindex="-1"
@@ -65,7 +65,27 @@ onMounted(() =>
   )
 );
 
-function createNew(confirm: boolean) {
+watch(isCreatingNewCanvas, async (val) => {
+  if (!val) return;
+
+  const clipboard = await navigator.clipboard.read();
+  if (!clipboard.length) return;
+
+  for (const item of clipboard) {
+    if (!item.types.includes("image/png")) continue;
+
+    const data = await item.getType("image/png");
+    const image = new Image();
+    image.src = URL.createObjectURL(data);
+    await new Promise((resolve) => (image.onload = resolve));
+
+    width.value = image.width;
+    height.value = image.height;
+    break;
+  }
+});
+
+async function createNew(confirm: boolean) {
   if (confirm) {
     const boundedWidth = Math.max(1, Math.min(9999, Math.floor(width.value)));
     const boundedHeight = Math.max(1, Math.min(9999, Math.floor(height.value)));
