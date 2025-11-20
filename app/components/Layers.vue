@@ -1,6 +1,6 @@
 <template>
   <div
-    class="hide-scrollbar flex max-h-[90dvh] w-80 -translate-y-1/2 cursor-auto flex-col-reverse items-center justify-start gap-2 overflow-y-scroll rounded-l-xl bg-white/75 p-4 pt-10 pb-12 transition-opacity duration-500 select-none *:select-none"
+    class="hide-scrollbar flex max-h-[90dvh] w-80 -translate-y-1/2 cursor-auto flex-col-reverse items-center justify-start gap-2 overflow-y-scroll rounded-l-xl bg-white/75 p-4 transition-opacity duration-500 select-none *:select-none"
     :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
   >
     <button
