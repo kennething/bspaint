@@ -1,12 +1,23 @@
 <template>
   <button class="absolute top-0 left-0 hidden" ref="outer"></button>
   <div class="relative">
+    <div
+      ref="background"
+      class="canvas pointer-events-none absolute top-0 left-0 h-[500px] w-[500px] select-none"
+      :style="{ transform: `scale(${canvasScale})`, backgroundColor: currentColor.secondary }"
+    ></div>
+    <img
+      class="canvas pointer-events-none absolute top-0 left-0 select-none"
+      v-for="layer in layers.slice(0, layerIndex)"
+      :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
+      :src="layer.dataUrl"
+    />
     <canvas
       ref="canvas"
       width="500"
       height="500"
-      class="canvas"
-      :style="{ transform: `scale(${canvasScale})`, backgroundColor: currentColor.secondary }"
+      class="canvas select-none"
+      :style="{ transform: `scale(${canvasScale})`, opacity: layers[layerIndex]?.isVisible ? `${layers[layerIndex]?.opacity}%` : 0 }"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
@@ -16,7 +27,13 @@
       @mouseup.right="handleMouseUp"
       @mouseleave.right="handleMouseUp"
     ></canvas>
-    <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30" :style="{ transform: `scale(${canvasScale})` }"></canvas>
+    <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30 select-none" :style="{ transform: `scale(${canvasScale})` }"></canvas>
+    <img
+      class="canvas pointer-events-none absolute top-0 left-0 select-none"
+      v-for="layer in layers.slice(layerIndex + 1)"
+      :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
+      :src="layer.dataUrl"
+    />
     <div
       class="canvas absolute top-0 left-0"
       v-if="currentTool === 'text' && tools.text.isTyping"
@@ -47,13 +64,14 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, layers, layerIndex, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
 
 const outer = useTemplateRef("outer");
 const canvas = useTemplateRef("canvas");
 const context = ref<CanvasRenderingContext2D | null>(null);
 const overlayCanvas = useTemplateRef("overlay-canvas");
 const overlayContext = ref<CanvasRenderingContext2D | null>(null);
+const background = useTemplateRef("background");
 
 const canvasScale = ref(1);
 
@@ -79,7 +97,7 @@ onMounted(() => {
 watch(resetEvent, async (val) => {
   if (!val) return;
 
-  if (!canvas.value || !context.value || !overlayCanvas.value || !overlayContext.value) return;
+  if (!canvas.value || !context.value || !overlayCanvas.value || !overlayContext.value || !background.value) return;
   context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
   history.value = [];
@@ -92,6 +110,8 @@ watch(resetEvent, async (val) => {
   canvas.value.height = canvasSize.value[1];
   overlayCanvas.value.width = canvasSize.value[0];
   overlayCanvas.value.height = canvasSize.value[1];
+  background.value.style.width = `${canvasSize.value[0]}px`;
+  background.value.style.height = `${canvasSize.value[1]}px`;
 
   context.value.lineCap = "round";
   context.value.lineJoin = "round";
@@ -136,6 +156,23 @@ function drawLoop() {
   overlayContext.value.setLineDash([]);
 }
 
+watch(layerIndex, (newIndex) => changeLayer(newIndex));
+function changeLayer(newIndex: number) {
+  if (!canvas.value || !context.value) return;
+
+  console.log("a");
+  const image = new Image();
+  const newLayerDataUrl = layers.value[newIndex]?.dataUrl;
+
+  if (!newLayerDataUrl) return;
+  image.src = newLayerDataUrl;
+  image.onload = () => {
+    if (!canvas.value || !context.value) return;
+    context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+    context.value.drawImage(image, 0, 0);
+  };
+}
+
 ////// history ///////
 function saveHistory() {
   if (!canvas.value) return;
@@ -143,22 +180,32 @@ function saveHistory() {
 
   if (historyIndex.value < history.value.length - 1) history.value = history.value.slice(0, historyIndex.value + 1);
 
-  history.value.push(dataUrl);
+  history.value.push([layerIndex.value, dataUrl]);
   historyIndex.value++;
+
+  layers.value[layerIndex.value]!.dataUrl = dataUrl;
+  console.log("c");
 }
 
 function restoreHistoryState() {
   if (!canvas.value || !context.value) return;
 
-  const dataUrl = history.value[historyIndex.value]!;
+  const [layer, dataUrl] = history.value[historyIndex.value]!;
+  changeLayer(layerIndex.value);
+
   const image = new Image();
 
+  image.src = dataUrl;
   image.onload = () => {
     if (!canvas.value || !context.value) return;
     context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+    context.value.globalAlpha = (layers.value[layer]?.opacity ?? 100) / 100;
     context.value.drawImage(image, 0, 0);
+    context.value.restore();
   };
-  image.src = dataUrl;
+
+  console.log(layers.value);
+  layers.value[layer]!.dataUrl = dataUrl;
 }
 
 function undo() {
@@ -187,15 +234,26 @@ watch(redoEvent, async (newVal) => {
 async function handleKeybinds(event: KeyboardEvent) {
   if (!canvas.value) return;
   if (isInModiferBar.value) return;
-  if (currentTool.value === "text" && tools.value.text.isTyping) return;
 
-  if (currentTool.value === "select" && event.key === "Backspace") {
-    stampSelection(false);
-    return event.preventDefault();
+  if (currentTool.value === "text") {
+    if (event.key === "Escape") {
+      stampText();
+      return event.preventDefault();
+    } else if (tools.value.text.isTyping) return;
+  }
+
+  if (currentTool.value === "select") {
+    if (event.key === "Backspace") {
+      stampSelection(false);
+      return event.preventDefault();
+    } else if (event.key === "Escape") {
+      stampSelection(true);
+      return event.preventDefault();
+    }
   }
 
   if (event.ctrlKey || event.metaKey) {
-    if (currentTool.value === "select" && !["idle", "selecting"].includes(tools.value.select.selectState) && event.key === "c") {
+    if (["c", "x"].includes(event.key) && currentTool.value === "select" && !["idle", "selecting"].includes(tools.value.select.selectState)) {
       const image = new Image();
       const tool = tools.value.select;
       if (!tool.selectionCanvas) return;
@@ -205,6 +263,8 @@ async function handleKeybinds(event: KeyboardEvent) {
           "image/png": fetch(image.src).then((res) => res.blob())
         })
       ]);
+
+      if (event.key === "x") stampSelection(false);
       return event.preventDefault();
     }
     if (event.key === "v") {
@@ -286,7 +346,7 @@ onUnmounted(() => window.removeEventListener("contextmenu", preventRightClick));
 
 /////// mouse events ///////
 function handleMouseDown(event: MouseEvent): void {
-  if (!canvas.value || !context.value) return;
+  if (!canvas.value || !context.value || layers.value[layerIndex.value]?.isLocked) return;
 
   const isLeftClick = event.button === 0;
 
@@ -499,7 +559,7 @@ function stampSelection(stampImage = true) {
   const tool = tools.value.select;
 
   if (tool.selectionCanvas) {
-    context.value.fillStyle = currentColor.value.secondary;
+    context.value.fillStyle = layerIndex.value === 0 ? currentColor.value.secondary : "transparent";
     context.value.fillRect(...tool.previousSelectionRect);
 
     if (stampImage) {
@@ -511,6 +571,7 @@ function stampSelection(stampImage = true) {
       context.value.translate(translateX, translateY);
       context.value.rotate(tool.rotationAngle);
       context.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
+      console.log("b");
     }
 
     context.value.restore();

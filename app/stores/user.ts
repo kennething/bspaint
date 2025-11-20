@@ -1,5 +1,4 @@
 import type { Reactive } from "vue";
-import type { Tool } from "~/utils/tools";
 
 export const useUserStore = defineStore("userStore", () => {
   const canvasSize = ref<[width: number, height: number]>([500, 500]);
@@ -11,8 +10,19 @@ export const useUserStore = defineStore("userStore", () => {
   const currentTool = ref<ToolType>("brush");
   const previousTool = ref<ToolType>("brush");
 
-  const history = ref<string[]>([]);
+  const history = ref<[layerIndex: number, dataUrl: string][]>([]);
   const historyIndex = ref(-1);
+
+  /** Image data from `.toDataURL()` */
+  const layers = ref<Layer[]>([
+    {
+      dataUrl: "",
+      isVisible: true,
+      isLocked: false,
+      opacity: 100
+    }
+  ]);
+  const layerIndex = ref(0);
 
   const tools = reactive({
     select: {
@@ -69,5 +79,21 @@ export const useUserStore = defineStore("userStore", () => {
   const redoEvent = ref(false);
   const resetEvent = ref(false);
 
-  return { canvasSize, currentColor, currentTool, previousTool, tools, isDrawing, history, historyIndex, undoEvent, redoEvent, resetEvent, isTransparentUI, isInModiferBar };
+  return {
+    canvasSize,
+    currentColor,
+    currentTool,
+    previousTool,
+    tools,
+    isDrawing,
+    history,
+    historyIndex,
+    layers,
+    layerIndex,
+    undoEvent,
+    redoEvent,
+    resetEvent,
+    isTransparentUI,
+    isInModiferBar
+  };
 });

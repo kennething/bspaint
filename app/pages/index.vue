@@ -2,19 +2,30 @@
   <div class="flex h-full min-h-dvh w-full min-w-dvw items-start justify-start pt-30 pl-60">
     <Teleport to="body">
       <Toolbar class="fixed top-1/2 left-0 z-100" />
+      <Layers class="fixed top-1/2 right-0 z-100" />
 
       <Transition>
         <ModifierBar v-if="['select', 'brush', 'eraser', 'text'].includes(currentTool)" class="fixed top-0 left-0 z-100" />
       </Transition>
 
-      <button
-        class="fixed bottom-0 left-0 z-100 rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition select-none hover:bg-red-200"
-        :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
-        @click="isCreatingNewCanvas = !isCreatingNewCanvas"
-        tabindex="-1"
-      >
-        New Canvas
-      </button>
+      <div class="fixed bottom-0 left-0 z-100 flex items-center justify-center gap-4">
+        <button
+          class="rounded-tr-xl bg-red-200/75 px-6 py-2 font-bold transition select-none hover:bg-red-200"
+          :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
+          @click="isCreatingNewCanvas = !isCreatingNewCanvas"
+          tabindex="-1"
+        >
+          New Canvas
+        </button>
+        <button
+          class="rounded-t-xl bg-green-200/75 px-6 py-2 font-bold transition select-none hover:bg-green-200"
+          @click="copyImage"
+          :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
+          tabindex="-1"
+        >
+          Copy Image
+        </button>
+      </div>
 
       <Transition>
         <div
@@ -49,7 +60,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { canvasSize, currentTool, resetEvent, isTransparentUI } = storeToRefs(userStore);
+const { canvasSize, currentTool, layers, resetEvent, isTransparentUI } = storeToRefs(userStore);
 
 const isCreatingNewCanvas = ref(false);
 const width = ref(500);
@@ -65,11 +76,16 @@ onMounted(() =>
   )
 );
 
-watch(isCreatingNewCanvas, async (val) => {
-  if (!val) return;
-
+onMounted(async () => {
+  const hasImage = await getClipboardImage();
+  if (hasImage) isCreatingNewCanvas.value = true;
+});
+watch(isCreatingNewCanvas, (val) => {
+  if (val) getClipboardImage();
+});
+async function getClipboardImage() {
   const clipboard = await navigator.clipboard.read();
-  if (!clipboard.length) return;
+  if (!clipboard.length) return false;
 
   for (const item of clipboard) {
     if (!item.types.includes("image/png")) continue;
@@ -81,9 +97,10 @@ watch(isCreatingNewCanvas, async (val) => {
 
     width.value = image.width;
     height.value = image.height;
-    break;
+    return true;
   }
-});
+  return false;
+}
 
 async function createNew(confirm: boolean) {
   if (confirm) {
@@ -96,6 +113,30 @@ async function createNew(confirm: boolean) {
   isCreatingNewCanvas.value = false;
   width.value = canvasSize.value[0];
   height.value = canvasSize.value[1];
+}
+
+async function copyImage() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasSize.value[0];
+  canvas.height = canvasSize.value[1];
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  for (const layer of layers.value) {
+    if (!layer.isVisible || layer.opacity === 0) continue;
+
+    const image = new Image();
+    image.src = layer.dataUrl;
+    await new Promise((resolve) => (image.onload = resolve));
+    context.globalAlpha = layer.opacity / 100;
+    context.drawImage(image, 0, 0);
+  }
+
+  navigator.clipboard.write([
+    new ClipboardItem({
+      "image/png": await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob!)))
+    })
+  ]);
 }
 </script>
 
