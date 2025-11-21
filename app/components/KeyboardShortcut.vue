@@ -6,7 +6,7 @@
     </div>
     <div class="flex items-center justify-center gap-1">
       <div v-for="(key, jndex) in shortcut.keys" class="flex items-center justify-center gap-1">
-        <kbd class="du-kbd du-kbd-lg">{{ key }}</kbd>
+        <kbd class="du-kbd du-kbd-lg dark:text-white">{{ key }}</kbd>
         <span v-if="jndex < shortcut.keys.length - 1">+</span>
       </div>
     </div>

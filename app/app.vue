@@ -35,7 +35,7 @@
             <input type="radio" name="shortcut-accordion" :checked="index === 0" :disabled="!('shortcuts' in tool)" />
 
             <div class="du-collapse-title text-lg font-semibold capitalize">
-              {{ tool.tool }} <kbd class="du-kbd du-kbd-lg">{{ tool.keys[0] }}</kbd>
+              {{ tool.tool }} <kbd class="du-kbd du-kbd-lg dark:text-white">{{ tool.keys[0] }}</kbd>
             </div>
 
             <div class="du-collapse-content flex flex-col items-center justify-center gap-2">

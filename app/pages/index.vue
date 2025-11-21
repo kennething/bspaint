@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { canvasSize, currentTool, layers, resetEvent, isTransparentUI } = storeToRefs(userStore);
+const { canvasSize, currentTool, layers, resetEvent, isInModiferBar, isTransparentUI } = storeToRefs(userStore);
 
 const isCreatingNewCanvas = ref(false);
 const width = ref(500);
@@ -81,6 +81,7 @@ onMounted(async () => {
   if (hasImage) isCreatingNewCanvas.value = true;
 });
 watch(isCreatingNewCanvas, (val) => {
+  isInModiferBar.value = val;
   if (val) getClipboardImage();
 });
 async function getClipboardImage() {
