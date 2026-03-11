@@ -1,6 +1,6 @@
 <template>
   <div
-    class="hide-scrollbar flex max-h-[90dvh] w-80 -translate-y-1/2 cursor-auto flex-col-reverse items-center justify-start gap-2 overflow-y-scroll rounded-l-xl bg-white/75 p-4 transition-opacity duration-500 select-none *:select-none"
+    class="hide-scrollbar flex max-h-[60svh] w-80 cursor-auto flex-col-reverse items-center justify-start gap-2 overflow-y-scroll rounded-l-2xl bg-white/75 p-4 transition-opacity duration-500 select-none *:select-none"
     :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
   >
     <button
@@ -38,7 +38,7 @@
       </button>
     </div>
 
-    <div class="flex w-full items-center justify-between rounded-xl bg-neutral-200/75 px-3 py-6" v-if="currentLayer">
+    <div class="sticky top-0 flex w-full items-center justify-between rounded-xl bg-neutral-200/75 px-3 py-6 backdrop-blur-xs" v-if="currentLayer">
       <div class="flex grow px-6">
         <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1" :data-tip="currentLayer.opacity + '%'">
           <div>
@@ -84,10 +84,9 @@
         </button>
 
         <button
-          :disabled="currentLayer.isLocked || isEditing"
-          :class="{ 'cursor-not-allowed! opacity-50 hover:bg-transparent!': currentLayer.isLocked || isEditing || layerIndex === 0 }"
+          :disabled="currentLayer.isLocked || isEditing || layers.length <= 1"
           @click="deleteLayer"
-          class="du-tooltip rounded-full p-1.5 hover:bg-neutral-300/50"
+          class="du-tooltip rounded-full p-1.5 hover:bg-neutral-300/50 disabled:cursor-not-allowed! disabled:opacity-50 disabled:hover:bg-transparent!"
           :data-tip="currentLayer.isLocked ? 'Locked!' : 'Delete'"
         >
           <img src="/icons/delete.svg" aria-hidden="true" />
@@ -122,9 +121,10 @@ function createNewLayer() {
 }
 
 function deleteLayer() {
-  if (layerIndex.value === 0) return;
+  if (layers.value.length <= 1) return;
   layers.value.splice(layerIndex.value, 1);
   layerIndex.value--;
+  if (layerIndex.value < 0) layerIndex.value = 0;
 }
 
 function submitNewOpacity() {

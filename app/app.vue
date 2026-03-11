@@ -96,6 +96,10 @@ onMounted(() => {
       name: "Swap Tools",
       note: "between your last two used tools",
       keys: [helperKeys.space]
+    },
+    {
+      name: "Toggle Layer Panel",
+      keys: ["L"]
     }
   ];
 

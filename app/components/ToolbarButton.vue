@@ -1,12 +1,12 @@
 <template>
   <button
-    class="du-tooltip du-tooltip-right rounded-lg border p-1"
-    :class="{ 'cursor-not-allowed! opacity-50': !canDoAction, 'hover:bg-neutral-200/50': canDoAction && !isDoingAction, 'bg-neutral-900/90': isDoingAction }"
+    class="du-tooltip du-tooltip-right rounded-lg border bg-neutral-50 p-1"
+    :class="{ 'cursor-not-allowed! opacity-50': !canDoAction, 'hover:bg-white': canDoAction && !isDoingAction, 'bg-neutral-900/90': isDoingAction }"
     :disabled="!canDoAction"
-    :data-tip="tooltip"
     @click="emit('clicked')"
   >
-    <img class="size-6" :src="`/icons/${icon}.svg`" :alt="icon" :class="{ invert: isDoingAction }" />
+    <!-- :data-tip="tooltip" -->
+    <img class="size-8" :src="`/icons/${icon}.svg`" :alt="icon" :class="{ invert: isDoingAction }" />
   </button>
 </template>
 

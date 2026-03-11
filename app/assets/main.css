@@ -10,12 +10,12 @@
 
 html {
   @apply overflow-scroll bg-sky-100 text-black;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
 
 button,
 div[role="button"] {
-  @apply cursor-pointer;
+  @apply cursor-pointer focus:outline-none;
 }
 
 .hide-scrollbar {

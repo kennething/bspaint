@@ -1,33 +1,40 @@
 <template>
-  <div
-    class="flex w-30 -translate-y-1/2 cursor-auto flex-col items-center justify-center gap-2 rounded-r-xl bg-white/75 p-4 pt-10 pb-12 transition-opacity duration-500 select-none *:select-none"
-    :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
-  >
-    <div class="mb-2 flex items-center justify-center gap-2">
+  <div class="flex w-full cursor-auto items-center gap-6 bg-gray-100 px-4 py-2 transition-opacity duration-500 select-none *:select-none" :class="{ 'pointer-events-none': isTransparentUI }">
+    <div class="flex items-center justify-center gap-2">
       <ToolbarButton :can-do-action="canUndo" :is-doing-action="!!isUndoing" @clicked="isUndoing = Symbol(0)" tooltip="Undo (Ctrl+Z)" icon="undo" />
       <ToolbarButton :can-do-action="canRedo" :is-doing-action="!!isRedoing" @clicked="isRedoing = Symbol(0)" tooltip="Redo (Ctrl+Y)" icon="redo" />
     </div>
 
-    <button
-      v-for="tool in tools"
-      :key="tool.type"
-      @click="currentTool = tool.type"
-      class="du-tooltip du-tooltip-right rounded-lg border p-2"
-      :class="currentTool === tool.type ? 'bg-neutral-900/90' : 'hover:bg-neutral-200/50'"
-      :data-tip="`${tool.type[0]?.toUpperCase() + tool.type.slice(1)} (${tool.shortcut.toUpperCase()})`"
-      tabindex="-1"
-    >
-      <img
-        class="size-8"
-        :class="{ invert: currentTool === tool.type }"
-        :src="tool.type === 'select' ? `/icons/select${tool.isTransparent ? '' : '-off'}.svg` : `/icons/${tool.type}.svg`"
-        :alt="tool.type"
-      />
-    </button>
+    <div class="-mr-8 grid grid-cols-3 gap-2 lg:flex">
+      <button
+        v-for="tool in tools"
+        :key="tool.type"
+        @click="currentTool = tool.type"
+        class="du-tooltip du-tooltip-bottom rounded-lg border bg-neutral-50 p-1"
+        :class="currentTool === tool.type ? 'bg-neutral-900/90 text-white' : 'hover:bg-white'"
+        :data-tip="`${tool.type[0]?.toUpperCase() + tool.type.slice(1)} (${tool.shortcut.toUpperCase()})`"
+        tabindex="-1"
+      >
+        <img
+          class="size-8"
+          :class="{ invert: currentTool === tool.type }"
+          :src="tool.type === 'select' ? `/icons/select${tool.isTransparent ? '' : '-off'}.svg` : `/icons/${tool.type}.svg`"
+          :alt="tool.type"
+        />
+      </button>
+    </div>
 
-    <div class="mt-2 flex translate-x-2.5 items-center justify-center">
-      <input type="color" class="size-10 cursor-pointer" v-model="currentColor.primary" tabindex="-1" />
-      <input type="color" class="size-10 -translate-x-1/2 translate-y-1/2 cursor-pointer" v-model="currentColor.secondary" tabindex="-1" />
+    <ModifierBar></ModifierBar>
+
+    <div class="relative flex items-center justify-center gap-1 text-center">
+      <label class="flex flex-col items-center gap-1 rounded-md p-2 transition-colors hover:bg-white" for="fore">
+        <input id="fore" type="color" class="size-10" v-model="currentColor.primary" tabindex="-1" />
+        Color 1
+      </label>
+      <label class="flex flex-col items-center gap-1 rounded-md p-2 transition-colors hover:bg-white" for="back">
+        <input id="back" type="color" class="size-10" v-model="currentColor.secondary" tabindex="-1" />
+        Color 2
+      </label>
     </div>
   </div>
 </template>
@@ -88,6 +95,16 @@ watch(currentTool, (newTool, oldTool) => {
   if (newTool === oldTool) return;
   previousTool.value = oldTool;
 });
+
+const layersEl = useTemplateRef("layers");
+function hideLayers() {
+  layersEl.value?.removeAttribute("open");
+}
+function layerToggle() {
+  if (!layersEl.value) return;
+  if (layersEl.value.hasAttribute("open")) window.addEventListener("mousedown", hideLayers);
+  else window.removeEventListener("mousedown", hideLayers);
+}
 </script>
 
 <style scoped></style>

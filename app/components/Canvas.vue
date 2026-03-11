@@ -9,6 +9,7 @@
     <img
       class="canvas pointer-events-none absolute top-0 left-0 select-none"
       v-for="layer in layers.slice(0, layerIndex)"
+      :key="layer.dataUrl"
       :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
       :src="layer.dataUrl"
     />
@@ -33,6 +34,7 @@
       v-for="layer in layers.slice(layerIndex + 1)"
       :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
       :src="layer.dataUrl"
+      :key="layer.dataUrl"
     />
     <div
       class="canvas absolute top-0 left-0"
@@ -64,7 +66,7 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, layers, layerIndex, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, layers, layerIndex, showLayerPanel, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
 
 const outer = useTemplateRef("outer");
 const canvas = useTemplateRef("canvas");
@@ -100,9 +102,20 @@ watch(resetEvent, async (val) => {
   if (!canvas.value || !context.value || !overlayCanvas.value || !overlayContext.value || !background.value) return;
   context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
+  layers.value.length = 1;
+  layers.value[0] = {
+    dataUrl: "",
+    isVisible: true,
+    isLocked: false,
+    opacity: 100
+  };
+  layerIndex.value = 0;
+
   history.value = [];
   historyIndex.value = -1;
 
+  // don't persist that...
+  stampSelection();
   currentTool.value = "brush";
   canvasScale.value = 1;
 
@@ -121,6 +134,26 @@ watch(resetEvent, async (val) => {
 
   await nextTick();
   resetEvent.value = false;
+
+  if (userStore.lastPastedImage) {
+    const data = await userStore.lastPastedImage.getType("image/png");
+    userStore.lastPastedImage = undefined;
+    if (!data) return;
+
+    const tool = tools.value.select;
+    const image = new Image();
+    image.onload = () => {
+      if (!canvas.value || !context.value) return;
+      tool.selectionRect = [0, 0, image.width, image.height];
+      tool.selectionCanvas = document.createElement("canvas");
+      tool.selectionCanvas.width = image.width;
+      tool.selectionCanvas.height = image.height;
+      tool.selectionCanvas.getContext("2d")!.drawImage(image, 0, 0);
+      tool.selectState = "selected";
+      stampSelection();
+    };
+    image.src = URL.createObjectURL(data);
+  }
 });
 
 function drawLoop() {
@@ -157,10 +190,13 @@ function drawLoop() {
 }
 
 watch(layerIndex, (newIndex) => changeLayer(newIndex));
+watch(
+  () => layers.value.length,
+  () => changeLayer(layerIndex.value)
+);
 function changeLayer(newIndex: number) {
   if (!canvas.value || !context.value) return;
 
-  console.log("a");
   const image = new Image();
   const newLayerDataUrl = layers.value[newIndex]?.dataUrl;
 
@@ -184,7 +220,6 @@ function saveHistory() {
   historyIndex.value++;
 
   layers.value[layerIndex.value]!.dataUrl = dataUrl;
-  console.log("c");
 }
 
 function restoreHistoryState() {
@@ -204,7 +239,6 @@ function restoreHistoryState() {
     context.value.restore();
   };
 
-  console.log(layers.value);
   layers.value[layer]!.dataUrl = dataUrl;
 }
 
@@ -234,6 +268,11 @@ watch(redoEvent, async (newVal) => {
 async function handleKeybinds(event: KeyboardEvent) {
   if (!canvas.value) return;
   if (isInModiferBar.value) return;
+
+  if (!tools.value.text.isTyping && event.key === "l") {
+    showLayerPanel.value = !showLayerPanel.value;
+    return event.preventDefault();
+  }
 
   if (currentTool.value === "text") {
     if (event.key === "Escape") {
@@ -571,7 +610,6 @@ function stampSelection(stampImage = true) {
       context.value.translate(translateX, translateY);
       context.value.rotate(tool.rotationAngle);
       context.value.drawImage(tool.selectionCanvas, -width / 2, -height / 2, width, height);
-      console.log("b");
     }
 
     context.value.restore();
@@ -643,7 +681,7 @@ function stampText() {
   context.value.fillStyle = tool.isLeftClick ? currentColor.value.primary : currentColor.value.secondary;
   context.value.textBaseline = "top";
   context.value.textAlign = "left";
-  context.value.fillText(tool.currentText, x, y);
+  context.value.fillText(tool.currentText, x, y - tool.fontSize);
 
   tool.isTyping = false;
   tool.currentText = "";

@@ -23,6 +23,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
   ]);
   const layerIndex = ref(0);
+  const showLayerPanel = ref(true);
 
   const tools = reactive({
     select: {
@@ -79,6 +80,8 @@ export const useUserStore = defineStore("userStore", () => {
   const redoEvent = ref(false);
   const resetEvent = ref(false);
 
+  const lastPastedImage = ref<ClipboardItem>();
+
   return {
     canvasSize,
     currentColor,
@@ -90,10 +93,12 @@ export const useUserStore = defineStore("userStore", () => {
     historyIndex,
     layers,
     layerIndex,
+    showLayerPanel,
     undoEvent,
     redoEvent,
     resetEvent,
     isTransparentUI,
-    isInModiferBar
+    isInModiferBar,
+    lastPastedImage
   };
 });

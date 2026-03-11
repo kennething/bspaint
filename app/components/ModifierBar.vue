@@ -1,12 +1,9 @@
 <template>
-  <div
-    class="flex h-16 w-100 cursor-default items-center justify-between rounded-br-xl bg-white/75 pl-6 transition duration-500 select-none *:select-none"
-    :class="{ 'pointer-events-none opacity-25': isTransparentUI }"
-  >
-    <img class="size-12" :src="currentTool === 'select' ? `/icons/select${tools.select.isTransparent ? '' : '-off'}.svg` : `/icons/${currentTool}.svg`" aria-hidden="true" />
+  <div class="flex cursor-default items-center justify-between rounded-br-xl transition duration-500 select-none *:select-none" :class="{ 'pointer-events-none opacity-25': isTransparentUI }">
+    <!-- <img class="size-12" :src="currentTool === 'select' ? `/icons/select${tools.select.isTransparent ? '' : '-off'}.svg` : `/icons/${currentTool}.svg`" aria-hidden="true" /> -->
 
     <div v-if="currentTool === 'brush' || currentTool === 'eraser'" class="flex grow px-6">
-      <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1" :data-tip="tools[currentTool].radius">
+      <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1">
         <div>
           <label for="stroke-size" class="text-xs text-neutral-700 capitalize">{{ currentTool }} Size</label>
           <input
@@ -24,7 +21,7 @@
         </div>
         <input
           id="stroke-size"
-          class="du-range du-range-xs text-blue-400 [--range-bg:cyan] [--range-fill:0] [--range-thumb:blue]"
+          class="du-range du-range-xs text-blue-300 [--du-range-bg:var(--color-sky-200)] [--du-range-thumb:var(--color-blue-500)]"
           type="range"
           min="1"
           max="100"
@@ -39,7 +36,7 @@
       <div class="du-tooltip du-tooltip-bottom" :data-tip="tools.select.isTransparent ? 'Transparent' : 'Opaque'">
         <input
           id="transparent-selection"
-          class="du-toggle du-toggle-sm border-blue-300 bg-blue-200 checked:border-blue-400 checked:bg-blue-300 checked:text-blue-100"
+          class="du-toggle du-toggle-sm border-blue-400 bg-blue-100 text-blue-500 checked:border-blue-300 checked:bg-blue-300"
           type="checkbox"
           :disabled="tools.select.selectState !== 'idle'"
           v-model="tools.select.isTransparent"
@@ -49,7 +46,7 @@
     </div>
 
     <div v-else-if="currentTool === 'text'" class="flex grow items-center justify-start gap-4 px-6">
-      <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1" :data-tip="tools.text.fontSize">
+      <div class="du-tooltip du-tooltip-bottom flex flex-col items-start justify-center gap-1">
         <div>
           <label for="stroke-size" class="text-xs text-neutral-700">Font Size</label>
           <input
@@ -67,7 +64,7 @@
         </div>
         <input
           id="stroke-size"
-          class="du-range du-range-xs text-blue-400 [--range-bg:cyan] [--range-fill:0] [--range-thumb:blue]"
+          class="du-range du-range-xs text-blue-300 [--du-range-bg:var(--color-sky-200)] [--du-range-thumb:var(--color-blue-500)]"
           type="range"
           min="8"
           max="100"
@@ -79,7 +76,7 @@
       <div class="flex flex-col items-start justify-center gap-1">
         <label for="font-family" class="text-xs text-neutral-700">Font Family</label>
         <select
-          class="du-select du-select-xs w-30 text-nowrap dark:text-neutral-200 dark:*:text-neutral-200"
+          class="du-select du-select-xs w-30 bg-white text-nowrap text-black"
           name="font-family"
           id="font-family"
           v-model="tools.text.fontFamily"

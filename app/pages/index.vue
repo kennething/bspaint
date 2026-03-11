@@ -1,12 +1,20 @@
 <template>
   <div class="flex h-full min-h-dvh w-full min-w-dvw items-start justify-start pt-30 pl-60">
     <Teleport to="body">
-      <Toolbar class="fixed top-1/2 left-0 z-100" />
-      <Layers class="fixed top-1/2 right-0 z-100" />
+      <Toolbar class="fixed top-0 z-100" />
 
-      <Transition>
-        <ModifierBar v-if="['select', 'brush', 'eraser', 'text'].includes(currentTool)" class="fixed top-0 left-0 z-100" />
-      </Transition>
+      <div class="fixed top-1/2 right-0 z-100 flex -translate-y-1/2 flex-col items-end justify-center" :class="{ 'pointer-events-none': isTransparentUI }">
+        <button
+          class="du-swap du-swap-rotate du-tooltip-left du-tooltip rounded-tl-2xl bg-white/75 px-2 transition-opacity duration-500"
+          :class="{ 'pointer-events-none opacity-25': isTransparentUI, 'du-swap-active rounded-l-2xl!': !showLayerPanel }"
+          :data-tip="`${showLayerPanel ? 'Hide' : 'Show'} layers (L)`"
+          @click="showLayerPanel = !showLayerPanel"
+        >
+          <img class="du-swap-on size-10" src="/icons/return-left.svg" aria-hidden="true" draggable="false" />
+          <img class="du-swap-off size-10" src="/icons/return-right.svg" aria-hidden="true" draggable="false" />
+        </button>
+        <Layers :class="{ 'pointer-events-none opacity-0': !showLayerPanel }" />
+      </div>
 
       <div class="fixed bottom-0 left-0 z-100 flex items-center justify-center gap-4">
         <button
@@ -33,15 +41,16 @@
           v-show="isCreatingNewCanvas"
         >
           <h3 class="text-2xl font-semibold">Create New Canvas</h3>
+          <p class="text-center text-sm">You can paste an image directly into this thing!!!</p>
           <p class="text-center text-xs font-thin text-neutral-400">Your current canvas will die and will not be saved due to the rookie mistake of not having health insurance.</p>
 
           <div class="mt-6 flex grow items-center justify-center gap-2">
             <label for="width" class="shrink-0 text-sm font-medium">Width (px)</label>
-            <input id="width" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="width" />
+            <input id="width" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="width" @keydown.stop />
           </div>
           <div class="mt-2 flex grow items-center justify-center gap-2">
             <label for="height" class="shrink-0 text-sm font-medium">Height (px)</label>
-            <input id="height" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="height" />
+            <input id="height" class="du-input du-input-sm grow dark:text-neutral-200" type="number" min="1" max="9999" v-model="height" @keydown.stop />
           </div>
 
           <div class="mt-6 flex w-full items-center justify-between gap-2">
@@ -60,9 +69,9 @@
 
 <script setup lang="ts">
 const userStore = useUserStore();
-const { canvasSize, currentTool, layers, resetEvent, isInModiferBar, isTransparentUI } = storeToRefs(userStore);
+const { canvasSize, currentTool, layers, showLayerPanel, resetEvent, isTransparentUI } = storeToRefs(userStore);
 
-const isCreatingNewCanvas = ref(false);
+const isCreatingNewCanvas = ref(true);
 const width = ref(500);
 const height = ref(500);
 
@@ -77,37 +86,49 @@ onMounted(() =>
 );
 
 onMounted(async () => {
-  const intervalId = setInterval(async () => {
-    try {
-      const hasImage = await getClipboardImage();
-      if (hasImage) isCreatingNewCanvas.value = true;
-      clearInterval(intervalId);
-    } catch (error) {
-      console.error(error);
+  try {
+    const clipboard = await navigator.clipboard.read();
+    if (!clipboard.length) return;
+
+    for (const item of clipboard) {
+      if (!item.types.includes("image/png")) continue;
+
+      const data = await item.getType("image/png");
+      const image = new Image();
+      image.src = URL.createObjectURL(data);
+      await new Promise((resolve) => (image.onload = resolve));
+
+      width.value = image.width;
+      height.value = image.height;
     }
-  }, 100);
+  } catch (error) {}
 });
-watch(isCreatingNewCanvas, (val) => {
-  isInModiferBar.value = val;
-  if (val) getClipboardImage();
-});
-async function getClipboardImage() {
-  const clipboard = await navigator.clipboard.read();
-  if (!clipboard.length) return false;
 
-  for (const item of clipboard) {
-    if (!item.types.includes("image/png")) continue;
+onMounted(() => window.addEventListener("keydown", createViaPaste));
+onBeforeUnmount(() => window.removeEventListener("keydown", createViaPaste));
+async function createViaPaste(e: KeyboardEvent) {
+  if (!isCreatingNewCanvas.value) return;
 
-    const data = await item.getType("image/png");
-    const image = new Image();
-    image.src = URL.createObjectURL(data);
-    await new Promise((resolve) => (image.onload = resolve));
+  if ((e.ctrlKey || e.metaKey) && e.key == "v") {
+    const clipboard = await navigator.clipboard.read();
+    if (!clipboard.length) return;
+    userStore.lastPastedImage = undefined;
 
-    width.value = image.width;
-    height.value = image.height;
-    return true;
+    for (const item of clipboard) {
+      if (!item.types.includes("image/png")) continue;
+
+      userStore.lastPastedImage = item;
+      const data = await item.getType("image/png");
+      const image = new Image();
+      image.src = URL.createObjectURL(data);
+      await new Promise((resolve) => (image.onload = resolve));
+
+      width.value = image.width;
+      height.value = image.height;
+      createNew(true);
+      return;
+    }
   }
-  return false;
 }
 
 async function createNew(confirm: boolean) {
