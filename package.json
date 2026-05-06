@@ -10,16 +10,17 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@pinia/nuxt": "^0.11.2",
-    "@tailwindcss/vite": "^4.1.12",
-    "nuxt": "^4.1.1",
-    "pinia": "^3.0.3",
-    "tailwindcss": "^4.1.12",
-    "vue": "^3.5.21",
-    "vue-router": "^4.5.1"
+    "@pinia/nuxt": "^0.11.3",
+    "@tailwindcss/vite": "^4.2.4",
+    "nuxt": "^4.4.4",
+    "pinia": "^3.0.4",
+    "tailwindcss": "^4.2.4",
+    "uuid": "^14.0.0",
+    "vue": "^3.5.34",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
-    "daisyui": "^5.1.6",
-    "prettier-plugin-tailwindcss": "^0.7.1"
+    "daisyui": "^5.5.19",
+    "prettier-plugin-tailwindcss": "^0.8.0"
   }
 }

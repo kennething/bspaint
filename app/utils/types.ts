@@ -1,4 +1,5 @@
 export interface Layer {
+  uuid: string;
   /** Image data from `.toDataURL()` */
   dataUrl: string;
   isVisible: boolean;

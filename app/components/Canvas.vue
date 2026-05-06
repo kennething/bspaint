@@ -8,7 +8,7 @@
     ></div>
     <img
       class="canvas pointer-events-none absolute top-0 left-0 select-none"
-      v-for="layer in layers.slice(0, layerIndex)"
+      v-for="layer in layers.slice(0, layers.findIndex((l) => l.uuid === layerUuid) ?? 0)"
       :key="layer.dataUrl"
       :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
       :src="layer.dataUrl"
@@ -18,7 +18,7 @@
       width="500"
       height="500"
       class="canvas select-none"
-      :style="{ transform: `scale(${canvasScale})`, opacity: layers[layerIndex]?.isVisible ? `${layers[layerIndex]?.opacity}%` : 0 }"
+      :style="{ transform: `scale(${canvasScale})`, opacity: layers.find((l) => l.uuid === layerUuid)?.isVisible ? `${layers.find((l) => l.uuid === layerUuid)?.opacity}%` : 0 }"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
@@ -31,7 +31,7 @@
     <canvas ref="overlay-canvas" width="500" height="500" class="canvas pointer-events-none absolute top-0 left-0 z-1 pr-30 pb-30 select-none" :style="{ transform: `scale(${canvasScale})` }"></canvas>
     <img
       class="canvas pointer-events-none absolute top-0 left-0 select-none"
-      v-for="layer in layers.slice(layerIndex + 1)"
+      v-for="layer in layers.slice(layers.findIndex((l) => l.uuid === layerUuid) + 1)"
       :style="{ transform: `scale(${canvasScale})`, opacity: layer.isVisible ? `${layer.opacity}%` : 0 }"
       :src="layer.dataUrl"
       :key="layer.dataUrl"
@@ -65,8 +65,10 @@
 </template>
 
 <script setup lang="ts">
+import { v4 as uuidv4 } from "uuid";
+
 const userStore = useUserStore();
-const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, layers, layerIndex, showLayerPanel, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
+const { currentColor, canvasSize, currentTool, tools, isDrawing, history, historyIndex, layers, layerUuid, showLayerPanel, undoEvent, redoEvent, resetEvent, isInModiferBar } = storeToRefs(userStore);
 
 const outer = useTemplateRef("outer");
 const canvas = useTemplateRef("canvas");
@@ -104,12 +106,13 @@ watch(resetEvent, async (val) => {
 
   layers.value.length = 1;
   layers.value[0] = {
+    uuid: uuidv4(),
     dataUrl: "",
     isVisible: true,
     isLocked: false,
     opacity: 100
   };
-  layerIndex.value = 0;
+  layerUuid.value = layers.value[0]!.uuid;
 
   history.value = [];
   historyIndex.value = -1;
@@ -189,16 +192,16 @@ function drawLoop() {
   overlayContext.value.setLineDash([]);
 }
 
-watch(layerIndex, (newIndex) => changeLayer(newIndex));
+watch(layerUuid, (newUuid) => changeLayer(newUuid));
 watch(
   () => layers.value.length,
-  () => changeLayer(layerIndex.value)
+  () => changeLayer(layerUuid.value)
 );
-function changeLayer(newIndex: number) {
+function changeLayer(newUuid: string) {
   if (!canvas.value || !context.value) return;
 
   const image = new Image();
-  const newLayerDataUrl = layers.value[newIndex]?.dataUrl;
+  const newLayerDataUrl = layers.value.find((layer) => layer.uuid === newUuid)?.dataUrl;
 
   if (!newLayerDataUrl) return;
   image.src = newLayerDataUrl;
@@ -216,17 +219,17 @@ function saveHistory() {
 
   if (historyIndex.value < history.value.length - 1) history.value = history.value.slice(0, historyIndex.value + 1);
 
-  history.value.push([layerIndex.value, dataUrl]);
+  history.value.push([layerUuid.value, dataUrl]);
   historyIndex.value++;
 
-  layers.value[layerIndex.value]!.dataUrl = dataUrl;
+  layers.value.find((layer) => layer.uuid === layerUuid.value)!.dataUrl = dataUrl;
 }
 
 function restoreHistoryState() {
   if (!canvas.value || !context.value) return;
 
   const [layer, dataUrl] = history.value[historyIndex.value]!;
-  changeLayer(layerIndex.value);
+  changeLayer(layer);
 
   const image = new Image();
 
@@ -234,12 +237,12 @@ function restoreHistoryState() {
   image.onload = () => {
     if (!canvas.value || !context.value) return;
     context.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
-    context.value.globalAlpha = (layers.value[layer]?.opacity ?? 100) / 100;
+    context.value.globalAlpha = (layers.value.find((l) => l.uuid === layer)?.opacity ?? 100) / 100;
     context.value.drawImage(image, 0, 0);
     context.value.restore();
   };
 
-  layers.value[layer]!.dataUrl = dataUrl;
+  layers.value.find((layer) => layer.uuid === layerUuid.value)!.dataUrl = dataUrl;
 }
 
 function undo() {
@@ -385,7 +388,7 @@ onUnmounted(() => window.removeEventListener("contextmenu", preventRightClick));
 
 /////// mouse events ///////
 function handleMouseDown(event: MouseEvent): void {
-  if (!canvas.value || !context.value || layers.value[layerIndex.value]?.isLocked) return;
+  if (!canvas.value || !context.value || layers.value.find((l) => l.uuid === layerUuid.value)?.isLocked) return;
 
   const isLeftClick = event.button === 0;
 
@@ -598,7 +601,7 @@ function stampSelection(stampImage = true) {
   const tool = tools.value.select;
 
   if (tool.selectionCanvas) {
-    context.value.fillStyle = layerIndex.value === 0 ? currentColor.value.secondary : "transparent";
+    context.value.fillStyle = layerUuid.value === layers.value[0]!.uuid ? currentColor.value.secondary : "transparent";
     context.value.fillRect(...tool.previousSelectionRect);
 
     if (stampImage) {

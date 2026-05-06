@@ -15,22 +15,22 @@
     <div
       role="button"
       v-for="(layer, index) in layers"
-      @click="layerIndex = index"
+      @click="layerUuid = layer.uuid"
       class="flex w-full items-center justify-start gap-2 rounded-xl px-3 py-2 hover:bg-neutral-200/50"
-      :class="{ 'bg-neutral-200/75 hover:bg-neutral-200/75': layerIndex === index }"
+      :class="{ 'bg-neutral-200/75 hover:bg-neutral-200/75': layerUuid === layer.uuid }"
     >
       <button @click.stop="layer.isVisible = !layer.isVisible" class="du-tooltip rounded-full p-1 hover:bg-neutral-300/50" :data-tip="layer.isVisible ? 'Hide' : 'Show'">
         <img class="size-4.5" :src="`/icons/eye-${layer.isVisible ? 'on' : 'off'}.svg`" aria-hidden="true" />
       </button>
 
-      <img :src="layer.dataUrl" class="max-h-10 max-w-20" aria-hidden="true" :class="{ 'border border-dotted': layerIndex === index }" :style="{ backgroundColor: currentColor.secondary }" />
+      <img :src="layer.dataUrl" class="max-h-10 max-w-20" aria-hidden="true" :class="{ 'border border-dotted': layerUuid === layer.uuid }" :style="{ backgroundColor: currentColor.secondary }" />
       <p class="grow text-left">Layer {{ index + 1 }}</p>
 
       <button
-        :disabled="layerIndex === index && isEditing"
+        :disabled="layerUuid === layer.uuid && isEditing"
         @click.stop="layer.isLocked = false"
         class="du-tooltip me-auto rounded-full p-1.5 hover:bg-neutral-300/50"
-        :class="{ 'cursor-not-allowed! opacity-50 hover:bg-transparent!': layerIndex === index && isEditing }"
+        :class="{ 'cursor-not-allowed! opacity-50 hover:bg-transparent!': layerUuid === layer.uuid && isEditing }"
         data-tip="Unlock"
         v-if="layer.isLocked"
       >
@@ -97,12 +97,13 @@
 </template>
 
 <script setup lang="ts">
+import { v4 as uuidv4 } from "uuid";
+
 const userStore = useUserStore();
-const { canvasSize, currentTool, tools, currentColor, layers, layerIndex, isTransparentUI, isInModiferBar } = storeToRefs(userStore);
+const { canvasSize, currentTool, tools, currentColor, layers, layerUuid, isTransparentUI, isInModiferBar } = storeToRefs(userStore);
 
 const isEditing = computed(() => (currentTool.value === "select" && tools.value.select.selectState === "selected") || (currentTool.value === "text" && tools.value.text.isTyping));
-
-const currentLayer = computed(() => layers.value[layerIndex.value]);
+const currentLayer = computed(() => layers.value.find((layer) => layer.uuid === layerUuid.value));
 
 function createNewLayer() {
   if (isEditing.value) return;
@@ -111,20 +112,24 @@ function createNewLayer() {
   canvas.width = canvasSize.value[0];
   canvas.height = canvasSize.value[1];
 
+  const uuid = uuidv4();
   layers.value.push({
+    uuid,
     dataUrl: canvas.toDataURL(),
     isVisible: true,
     isLocked: false,
     opacity: 100
   });
-  layerIndex.value = layers.value.length - 1;
+  layerUuid.value = uuid;
 }
 
 function deleteLayer() {
   if (layers.value.length <= 1) return;
-  layers.value.splice(layerIndex.value, 1);
-  layerIndex.value--;
-  if (layerIndex.value < 0) layerIndex.value = 0;
+  layers.value.splice(
+    layers.value.findIndex((layer) => layer.uuid === layerUuid.value),
+    1
+  );
+  layerUuid.value = layers.value[0]!.uuid;
 }
 
 function submitNewOpacity() {

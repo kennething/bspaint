@@ -1,30 +1,28 @@
 import type { Reactive } from "vue";
+import { v4 as uuidv4 } from "uuid";
 
 export const useUserStore = defineStore("userStore", () => {
   const canvasSize = ref<[width: number, height: number]>([500, 500]);
-
   const currentColor = reactive({
     primary: "#000000",
     secondary: "#ffffff"
   });
   const currentTool = ref<ToolType>("brush");
   const previousTool = ref<ToolType>("brush");
-
-  const history = ref<[layerIndex: number, dataUrl: string][]>([]);
+  const history = ref<[layerUuid: string, dataUrl: string][]>([]);
   const historyIndex = ref(-1);
-
   /** Image data from `.toDataURL()` */
   const layers = ref<Layer[]>([
     {
+      uuid: uuidv4(),
       dataUrl: "",
       isVisible: true,
       isLocked: false,
       opacity: 100
     }
   ]);
-  const layerIndex = ref(0);
+  const layerUuid = ref(layers.value[0]!.uuid);
   const showLayerPanel = ref(true);
-
   const tools = reactive({
     select: {
       type: "select",
@@ -68,20 +66,16 @@ export const useUserStore = defineStore("userStore", () => {
       fontFamily: "Comic Sans MS"
     } as TextTool
   }) satisfies Reactive<Record<ToolType, Tool>>;
-
   const isDrawing = computed(() => {
     const tool = tools[currentTool.value];
     return "isDrawing" in tool && tool.isDrawing;
   });
   const isTransparentUI = computed(() => tools.brush.isDrawing || tools.eraser.isDrawing || ["selecting", "moving", "rotating", "resizing"].includes(tools.select.selectState));
   const isInModiferBar = ref(false);
-
   const undoEvent = ref(false);
   const redoEvent = ref(false);
   const resetEvent = ref(false);
-
   const lastPastedImage = ref<ClipboardItem>();
-
   return {
     canvasSize,
     currentColor,
@@ -92,7 +86,7 @@ export const useUserStore = defineStore("userStore", () => {
     history,
     historyIndex,
     layers,
-    layerIndex,
+    layerUuid,
     showLayerPanel,
     undoEvent,
     redoEvent,
