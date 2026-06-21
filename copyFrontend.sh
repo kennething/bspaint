@@ -62,7 +62,14 @@ find "$SRC_DIR" -type f | while IFS= read -r file; do
   if [[ "$first_line" == *"$EXEMPTION_PHRASE"* ]]; then
     # if file exists in destination, delete it
     if [[ -e "$dest_file" ]]; then
-      rm -f "$dest_file"
+      first_line_dest=""
+      if [[ -s "$dest_file" ]]; then
+        IFS= read -r first_line_dest < "$dest_file" || true
+      fi
+
+      if [[ "$first_line_dest" != *"$EXEMPTION_PHRASE"* ]]; then
+        rm -f "$dest_file"
+      fi
     fi
     continue
   fi

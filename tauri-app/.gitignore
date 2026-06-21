@@ -1,9 +1,15 @@
 .prettierrc.json
 app/app.vue
 app/assets/main.css
+app/components/Canvas.vue
+app/composables/tools.ts
 app/pages/draw.vue
-app/stores/user.ts
+app/stores/canvas.ts
+app/stores/tools.ts
 app/utils/fonts.ts
+app/utils/tools.ts
+app/utils/utils.ts
+index.d.ts
 public/bspaint.svg
 public/icons/brush.svg
 public/icons/close.svg
