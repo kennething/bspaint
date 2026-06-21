@@ -12,6 +12,12 @@ export default defineNuxtConfig({
       include: ["@vue/devtools-core", "@vue/devtools-kit", "fabric"]
     }
   },
+  runtimeConfig: {
+    public: {
+      minZoom: 0.1,
+      maxZoom: 50
+    }
+  },
   app: {
     head: {
       title: "BS Paint",
