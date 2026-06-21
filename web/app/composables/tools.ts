@@ -18,7 +18,7 @@ export function useUpdateBrush() {
 /** sets the active tool in `toolStore` */
 export function useSetTool(tool: Tool) {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, layers } = storeToRefs(canvasStore);
 
   const toolStore = useToolStore();
   toolStore.activeTool = tool;
@@ -30,8 +30,6 @@ export function useSetTool(tool: Tool) {
     obj.selectable = false;
     obj.evented = false;
   });
-
-  if (activeLayerId.value === 0) return;
 
   if (tool === "select") {
     canvas.value.selection = true;

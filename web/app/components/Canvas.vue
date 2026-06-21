@@ -25,20 +25,20 @@
 
 <script setup lang="ts">
 import { Canvas, InteractiveFabricObject, Rect } from "fabric";
+// TODO: undo/redo
 
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();
 const { activeLayerId, layers } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { zoomLevel, activeTool, primaryColor, secondaryColor } = storeToRefs(toolStore);
+const { zoomLevel, activeTool, primaryColor, secondaryColor, mousePos, brushSize } = storeToRefs(toolStore);
 
 onMounted(() => {
   canvasStore.fabricCanvas = new Canvas(canvasRef.value ?? undefined, {
     width: 800,
     height: 600,
     backgroundColor: "#ffffff",
-    selection: true,
     preserveObjectStacking: true,
     allowTouchScrolling: true,
     centeredKey: "altKey",
@@ -51,6 +51,7 @@ onMounted(() => {
     controlsAboveOverlay: true,
     enableRetinaScaling: false
   });
+  canvasStore.fabricCanvas.isDrawingMode = true;
 
   InteractiveFabricObject.ownDefaults = {
     ...InteractiveFabricObject.ownDefaults,
@@ -65,9 +66,10 @@ onMounted(() => {
     transparentCorners: false
   };
 
-  const rect = new Rect({ left: 100, top: 50, fill: "yellow", width: 200, height: 100, layerId: activeLayerId.value });
+  // HACK: workaround to show bg color on load
+  const rect = new Rect({ left: 0, top: 0, fill: "#ffffff", width: 0, height: 0, layerId: 0 });
   canvasStore.fabricCanvas.add(rect);
-  canvasStore.fabricCanvas.setActiveObject(rect);
+  canvasStore.fabricCanvas.remove(rect);
 
   setupScroll(canvasStore.fabricCanvas, (zoom) => void (zoomLevel.value = zoom));
   setupMouseDown(
@@ -78,6 +80,12 @@ onMounted(() => {
     () => activeLayerId.value,
     toolStore.setColor,
     useSetTool
+  );
+  setupBrushPreview(
+    canvasStore.fabricCanvas,
+    () => activeTool.value,
+    () => brushSize.value,
+    () => primaryColor.value
   );
   canvasStore.fabricCanvas.on("path:created", (event) => event.path.set({ layerId: activeLayerId.value }));
   window.addEventListener("paste", handlePasteHelper);

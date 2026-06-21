@@ -1,4 +1,4 @@
-import { Color, type Canvas } from "fabric";
+import { type Canvas } from "fabric";
 
 export type Layer = {
   id: number;
@@ -8,9 +8,9 @@ export type Layer = {
 };
 
 export const useCanvasStore = defineStore("canvasStore", () => {
-  const fabricCanvas = markRaw(ref<Canvas>());
+  const fabricCanvas = markRaw(shallowRef<Canvas>());
 
-  const layerIdCounter = ref(1);
+  const layerIdCounter = ref(2);
   const activeLayerId = ref(1);
 
   const layers = ref<Layer[]>([
@@ -23,15 +23,13 @@ export const useCanvasStore = defineStore("canvasStore", () => {
   ]);
   watch(
     layers,
-    (newLayers, oldLayers) => {
+    () => {
       if (!fabricCanvas.value) return console.warn("watch layers no fabricCanvas");
 
-      const layerDiff = newLayers.filter((newLayer) => !oldLayers.some((oldLayer) => oldLayer.opacity === newLayer.opacity));
-      console.log(newLayers[0]?.opacity, oldLayers[0]?.opacity);
-      layerDiff.forEach((layer) => {
-        fabricCanvas.value?.getObjects().forEach((obj) => {
-          if (obj.layerId === layer.id) obj.set({ opacity: layer.opacity });
-        });
+      fabricCanvas.value.getObjects().forEach((obj) => {
+        const layer = layers.value.find((l) => l.id === obj.layerId);
+        if (!layer) return fabricCanvas.value?.remove(obj);
+        obj.set({ opacity: layer.opacity / 100 });
       });
 
       fabricCanvas.value.renderAll();
@@ -47,7 +45,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
       id: newId,
       name: `Layer ${newId}`,
       isLocked: false,
-      opacity: 1
+      opacity: 100
     });
     activeLayerId.value = newId;
 
@@ -92,7 +90,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
           id: 1,
           name: "Layer 1",
           isLocked: false,
-          opacity: 1
+          opacity: 100
         }
       ];
     if (activeLayerId.value === layer.id) activeLayerId.value = layers.value[0]!.id;

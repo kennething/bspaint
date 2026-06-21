@@ -1,4 +1,4 @@
-import { FabricImage, IText, Point, type Canvas, type TPointerEventInfo } from "fabric";
+import { Circle, FabricImage, IText, Point, type Canvas, type TPointerEventInfo } from "fabric";
 
 export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: add fill tool
 
@@ -57,7 +57,6 @@ export function setupMouseDown(
   setTool: (tool: Tool) => void
 ) {
   canvas.on("mouse:down", (event) => {
-    const isOnBackground = getLayerId() === 0;
     const activeTool = getActiveTool();
     const isLeftClick = "button" in event.e && event.e.button === 0;
 
@@ -73,15 +72,13 @@ export function setupMouseDown(
       setColor(isLeftClick ? "primary" : "secondary", hex);
       setTool("brush");
     } // eyedropper
-    else if (activeTool === "text" && !event.target && !isOnBackground) {
-      const pointer = canvas.getViewportPoint(event.e);
-
+    else if (activeTool === "text" && !event.target) {
       const { primary, secondary } = getColors();
       const { fontFamily, fontSize } = getFontSettings();
 
       const text = new IText("Type here", {
-        left: pointer.x, // TODO: fix positions when camera moved from default
-        top: pointer.y,
+        left: event.scenePoint.x,
+        top: event.scenePoint.y,
         fontFamily,
         fontSize,
         fill: isLeftClick ? primary : secondary,
@@ -94,6 +91,37 @@ export function setupMouseDown(
       text.selectAll();
       setTool("select");
     } // text
+  });
+}
+
+/**
+ * @param canvas reference to the canvas
+ * @param getActiveTool a function that gets the value of `activeTool` in `toolStore`
+ * @param getBrushSize a function that gets the value of `brushSize` in `toolStore`
+ * @param getPrimaryColor a function that gets the value of `primaryColor` in `toolStore`
+ */
+export function setupBrushPreview(canvas: Canvas, getActiveTool: () => Tool, getBrushSize: () => number, getPrimaryColor: () => string) {
+  canvas.on("mouse:move", (event) => {
+    const activeTool = getActiveTool();
+
+    if (activeTool === "brush") {
+      const existing = canvas.getObjects().find((obj) => obj.id === "brushPreview");
+      if (existing) canvas.remove(existing);
+
+      const brushPreview = new Circle({
+        left: event.scenePoint.x,
+        top: event.scenePoint.y,
+        radius: getBrushSize() / 2 - 0.5,
+        fill: getPrimaryColor(),
+        stroke: "#000000",
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+        id: "brushPreview"
+      });
+      canvas.add(brushPreview);
+      canvas.requestRenderAll();
+    } // brush
   });
 }
 
