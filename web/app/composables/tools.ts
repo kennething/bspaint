@@ -18,7 +18,7 @@ export function useUpdateBrush() {
 /** sets the active tool in `toolStore` */
 export function useSetTool(tool: Tool) {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
 
   const toolStore = useToolStore();
   toolStore.activeTool = tool;
@@ -30,6 +30,8 @@ export function useSetTool(tool: Tool) {
     obj.selectable = false;
     obj.evented = false;
   });
+
+  if (activeLayerId.value === 0) return;
 
   if (tool === "select") {
     canvas.value.selection = true;
@@ -45,10 +47,4 @@ export function useSetTool(tool: Tool) {
     canvas.value.isDrawingMode = true;
     useUpdateBrush();
   } // brush
-  else if (tool === "eraser") {
-    canvas.value.isDrawingMode = true;
-    canvas.value.freeDrawingBrush = new PencilBrush(canvas.value);
-    canvas.value.freeDrawingBrush.color = "#ffffff";
-    canvas.value.freeDrawingBrush.width = toolStore.brushSize;
-  } // eraser
 }

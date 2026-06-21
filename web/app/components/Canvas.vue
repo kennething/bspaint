@@ -3,7 +3,6 @@
     <div class="flex items-center gap-2">
       <button @click="useSetTool('select')" :class="{ 'bg-gray-300': activeTool === 'select' }">Select</button>
       <button @click="useSetTool('brush')" :class="{ 'bg-gray-300': activeTool === 'brush' }">Brush</button>
-      <button @click="useSetTool('eraser')" :class="{ 'bg-gray-300': activeTool === 'eraser' }">Eraser</button>
       <button @click="useSetTool('text')" :class="{ 'bg-gray-300': activeTool === 'text' }">Text</button>
       <button @click="useSetTool('eyedropper')" :class="{ 'bg-gray-300': activeTool === 'eyedropper' }">Eyedropper</button>
       <input type="color" v-model="primaryColor" title="Primary Color" />
@@ -11,16 +10,26 @@
     </div>
   </div>
 
+  <div class="fixed top-1/2 right-0 flex -translate-y-1/2 flex-col items-center justify-center gap-4 p-4">
+    <button @click="canvasStore.addLayer">add</button>
+    <div v-for="layer in layers.toReversed()">
+      <button @click="canvasStore.switchLayer(layer)">{{ layer.name }}</button>
+      <button @click="canvasStore.toggleLock(layer)">lock</button>
+      <button @click="canvasStore.deleteLayer(layer)">delete</button>
+      <input type="range" min="0" max="100" v-model="layer.opacity" />
+    </div>
+  </div>
+
   <canvas ref="canvas"></canvas>
 </template>
 
 <script setup lang="ts">
-import { Canvas, InteractiveFabricObject } from "fabric";
+import { Canvas, InteractiveFabricObject, Rect } from "fabric";
 
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();
-const { activeLayerId } = storeToRefs(canvasStore);
+const { activeLayerId, layers } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
 const { zoomLevel, activeTool, primaryColor, secondaryColor } = storeToRefs(toolStore);
 
@@ -31,7 +40,6 @@ onMounted(() => {
     backgroundColor: "#ffffff",
     selection: true,
     preserveObjectStacking: true,
-    enableRetinaScaling: false,
     allowTouchScrolling: true,
     centeredKey: "altKey",
     centeredRotation: true,
@@ -40,7 +48,8 @@ onMounted(() => {
     selectionDashArray: [2, 2],
     selectionBorderColor: "blue",
     selectionKey: "shiftKey",
-    controlsAboveOverlay: true
+    controlsAboveOverlay: true,
+    enableRetinaScaling: false
   });
 
   InteractiveFabricObject.ownDefaults = {
@@ -52,10 +61,15 @@ onMounted(() => {
     cornerDashArray: [1, 1],
     borderColor: "blue",
     borderDashArray: [2, 2],
-    borderScaleFactor: 2
+    borderScaleFactor: 2,
+    transparentCorners: false
   };
 
-  setupZoom(canvasStore.fabricCanvas, (zoom) => void (zoomLevel.value = zoom));
+  const rect = new Rect({ left: 100, top: 50, fill: "yellow", width: 200, height: 100, layerId: activeLayerId.value });
+  canvasStore.fabricCanvas.add(rect);
+  canvasStore.fabricCanvas.setActiveObject(rect);
+
+  setupScroll(canvasStore.fabricCanvas, (zoom) => void (zoomLevel.value = zoom));
   setupMouseDown(
     canvasStore.fabricCanvas,
     () => activeTool.value,

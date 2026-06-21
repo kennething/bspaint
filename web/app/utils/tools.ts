@@ -1,17 +1,23 @@
-import { FabricImage, IText, Point, type Canvas } from "fabric";
+import { FabricImage, IText, Point, type Canvas, type TPointerEventInfo } from "fabric";
 
-export type Tool = "brush" | "eraser" | "fill" | "eyedropper" | "text" | "select";
+export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: add fill tool
 
 /**
  * @param canvas reference to the canvas
  * @param setZoomLevel a function that sets the value of `zoomLevel` in `canvasStore`
  */
-export function setupZoom(canvas: Canvas, setZoomLevel: (zoom: number) => void) {
+export function setupScroll(canvas: Canvas, setZoomLevel: (zoom: number) => void) {
   const config = useRuntimeConfig();
 
   canvas.on("mouse:wheel", (event) => {
-    if (!event.e.ctrlKey && !event.e.metaKey) return;
+    event.e.preventDefault();
+    event.e.stopPropagation();
 
+    if (event.e.ctrlKey || event.e.metaKey) return handleZoom(event);
+    handleScroll(event);
+  });
+
+  function handleZoom(event: TPointerEventInfo<WheelEvent>) {
     const delta = event.e.deltaY;
     let zoom = canvas.getZoom();
 
@@ -21,10 +27,15 @@ export function setupZoom(canvas: Canvas, setZoomLevel: (zoom: number) => void) 
 
     setZoomLevel(zoom);
     canvas.zoomToPoint(new Point(event.e.offsetX, event.e.offsetY), zoom);
+  }
+  function handleScroll(event: TPointerEventInfo<WheelEvent>) {
+    const currentTransform = canvas.viewportTransform;
+    if (!currentTransform) return console.warn("setupScroll no viewportTransform");
 
-    event.e.preventDefault();
-    event.e.stopPropagation();
-  });
+    currentTransform[4] -= event.e.deltaX;
+    currentTransform[5] -= event.e.deltaY;
+    canvas.zoomToPoint(new Point(event.e.offsetX, event.e.offsetY), canvas.getZoom());
+  }
 }
 
 /**
@@ -46,12 +57,14 @@ export function setupMouseDown(
   setTool: (tool: Tool) => void
 ) {
   canvas.on("mouse:down", (event) => {
+    const isOnBackground = getLayerId() === 0;
     const activeTool = getActiveTool();
     const isLeftClick = "button" in event.e && event.e.button === 0;
 
     if (activeTool === "eyedropper") {
       const pointer = canvas.getViewportPoint(event.e);
       const ctx = canvas.getContext();
+
       const pixel = ctx.getImageData(pointer.x, pointer.y, 1, 1).data;
       if (!pixel) return console.warn("setupMouseDown eyedropper no pixel data");
       if (pixel.some((value) => value === undefined)) return console.warn("setupMouseDown eyedropper some pixel data missing");
@@ -60,14 +73,14 @@ export function setupMouseDown(
       setColor(isLeftClick ? "primary" : "secondary", hex);
       setTool("brush");
     } // eyedropper
-    else if (activeTool === "text" && !event.target) {
+    else if (activeTool === "text" && !event.target && !isOnBackground) {
       const pointer = canvas.getViewportPoint(event.e);
 
       const { primary, secondary } = getColors();
       const { fontFamily, fontSize } = getFontSettings();
 
       const text = new IText("Type here", {
-        left: pointer.x,
+        left: pointer.x, // TODO: fix positions when camera moved from default
         top: pointer.y,
         fontFamily,
         fontSize,
