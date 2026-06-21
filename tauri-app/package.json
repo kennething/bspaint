@@ -1,0 +1,31 @@
+{
+  "name": "tauri-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "@tailwindcss/vite": "^4.3.1",
+    "fabric": "^7.4.0",
+    "nuxt": "^4.4.8",
+    "pinia": "^3.0.4",
+    "tailwindcss": "^4.3.1",
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2"
+  },
+  "devDependencies": {
+    "daisyui": "^5.5.23",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "@tauri-apps/cli": "^2"
+  }
+}
