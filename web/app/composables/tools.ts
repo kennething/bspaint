@@ -18,7 +18,7 @@ export function useUpdateBrush() {
 /** sets the active tool in `toolStore` */
 export function useSetTool(tool: Tool) {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
 
   const toolStore = useToolStore();
   toolStore.activeTool = tool;
@@ -29,13 +29,17 @@ export function useSetTool(tool: Tool) {
   canvas.value.forEachObject((obj) => {
     obj.selectable = false;
     obj.evented = false;
+    if (obj.name === "brushPreview") canvas.value?.remove(obj);
   });
+
+  const activeLayer = layers.value.find((layer) => layer.id === activeLayerId.value);
+  if (activeLayer?.isLocked) return canvas.value.setCursor("not-allowed");
 
   if (tool === "select") {
     canvas.value.selection = true;
     canvas.value.forEachObject((obj) => {
       const layer = layers.value.find((layer) => layer.id === obj.layerId);
-      if (!layer || layer.isLocked) return;
+      if (!layer || layer.isLocked || layer.id !== activeLayerId.value) return;
 
       obj.selectable = true;
       obj.evented = true;

@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: ["@vue/devtools-core", "@vue/devtools-kit", "fabric"]
+      include: ["@vue/devtools-core", "@vue/devtools-kit", "fabric", "uuid"]
     }
   },
   runtimeConfig: {

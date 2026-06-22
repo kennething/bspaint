@@ -53,6 +53,7 @@ export function setupMouseDown(
   getFontSettings: () => { fontSize: number; fontFamily: string },
   getColors: () => { primary: string; secondary: string },
   getLayerId: () => number,
+  getActiveLayer: () => Layer | undefined,
   setColor: (type: "primary" | "secondary", color: string) => void,
   setTool: (tool: Tool) => void
 ) {
@@ -72,7 +73,10 @@ export function setupMouseDown(
       setColor(isLeftClick ? "primary" : "secondary", hex);
       setTool("brush");
     } // eyedropper
-    else if (activeTool === "text" && !event.target) {
+
+    if (getActiveLayer()?.isLocked) return;
+
+    if (activeTool === "text" && !event.target) {
       const { primary, secondary } = getColors();
       const { fontFamily, fontSize } = getFontSettings();
 
@@ -97,15 +101,16 @@ export function setupMouseDown(
 /**
  * @param canvas reference to the canvas
  * @param getActiveTool a function that gets the value of `activeTool` in `toolStore`
+ * @param getActiveLayerOpacity a function that gets the opacity of the active layer from `canvasStore`
  * @param getBrushSize a function that gets the value of `brushSize` in `toolStore`
  * @param getPrimaryColor a function that gets the value of `primaryColor` in `toolStore`
  */
-export function setupBrushPreview(canvas: Canvas, getActiveTool: () => Tool, getBrushSize: () => number, getPrimaryColor: () => string) {
+export function setupBrushPreview(canvas: Canvas, getActiveTool: () => Tool, getActiveLayerOpacity: () => number, getBrushSize: () => number, getPrimaryColor: () => string) {
   canvas.on("mouse:move", (event) => {
     const activeTool = getActiveTool();
 
     if (activeTool === "brush") {
-      const existing = canvas.getObjects().find((obj) => obj.id === "brushPreview");
+      const existing = canvas.getObjects().find((obj) => obj.name === "brushPreview");
       if (existing) canvas.remove(existing);
 
       const brushPreview = new Circle({
@@ -113,11 +118,12 @@ export function setupBrushPreview(canvas: Canvas, getActiveTool: () => Tool, get
         top: event.scenePoint.y,
         radius: getBrushSize() / 2 - 0.5,
         fill: getPrimaryColor(),
-        stroke: "#000000",
+        stroke: getPrimaryColor(),
         selectable: false,
         evented: false,
         excludeFromExport: true,
-        id: "brushPreview"
+        name: "brushPreview",
+        opacity: getActiveLayerOpacity()
       });
       canvas.add(brushPreview);
       canvas.requestRenderAll();

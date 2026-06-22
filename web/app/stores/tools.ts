@@ -7,7 +7,6 @@ export const useToolStore = defineStore("toolStore", () => {
   const recentColors = ref<string[]>(new Array(10).fill("#000000"));
 
   const brushSize = ref(5);
-  const mousePos = reactive({ x: 0, y: 0 });
 
   const fontSize = ref(24);
   const fontFamily = ref<FontFamily>("Comic Sans MS");
@@ -28,5 +27,5 @@ export const useToolStore = defineStore("toolStore", () => {
     useUpdateBrush();
   }
 
-  return { activeTool, primaryColor, secondaryColor, recentColors, brushSize, mousePos, fontSize, fontFamily, zoomLevel, setColor };
+  return { activeTool, primaryColor, secondaryColor, recentColors, brushSize, fontSize, fontFamily, zoomLevel, setColor };
 });

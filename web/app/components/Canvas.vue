@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center gap-4 p-4">
+  <!-- <div class="flex flex-col items-center justify-center gap-4 p-4">
     <div class="flex items-center gap-2">
       <button @click="useSetTool('select')" :class="{ 'bg-gray-300': activeTool === 'select' }">Select</button>
       <button @click="useSetTool('brush')" :class="{ 'bg-gray-300': activeTool === 'brush' }">Brush</button>
@@ -8,37 +8,30 @@
       <input type="color" v-model="primaryColor" title="Primary Color" />
       <input type="color" v-model="secondaryColor" title="Secondary Color" />
     </div>
-  </div>
+  </div> -->
 
-  <div class="fixed top-1/2 right-0 flex -translate-y-1/2 flex-col items-center justify-center gap-4 p-4">
-    <button @click="canvasStore.addLayer">add</button>
-    <div v-for="layer in layers.toReversed()">
-      <button @click="canvasStore.switchLayer(layer)">{{ layer.name }}</button>
-      <button @click="canvasStore.toggleLock(layer)">lock</button>
-      <button @click="canvasStore.deleteLayer(layer)">delete</button>
-      <input type="range" min="0" max="100" v-model="layer.opacity" />
-    </div>
-  </div>
-
-  <canvas ref="canvas"></canvas>
+  <canvas ref="canvas" class="transparent-sprite"></canvas>
 </template>
 
 <script setup lang="ts">
-import { Canvas, InteractiveFabricObject, Rect } from "fabric";
-// TODO: undo/redo
+import { Canvas, InteractiveFabricObject, Point } from "fabric";
+import { v7 } from "uuid";
 
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();
 const { activeLayerId, layers } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { zoomLevel, activeTool, primaryColor, secondaryColor, mousePos, brushSize } = storeToRefs(toolStore);
+const { zoomLevel, activeTool, primaryColor, secondaryColor, brushSize } = storeToRefs(toolStore);
 
 onMounted(() => {
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
   canvasStore.fabricCanvas = new Canvas(canvasRef.value ?? undefined, {
-    width: 800,
-    height: 600,
-    backgroundColor: "#ffffff",
+    width: windowWidth,
+    height: windowHeight,
+    backgroundColor: "#ffffffff",
     preserveObjectStacking: true,
     allowTouchScrolling: true,
     centeredKey: "altKey",
@@ -52,6 +45,7 @@ onMounted(() => {
     enableRetinaScaling: false
   });
   canvasStore.fabricCanvas.isDrawingMode = true;
+  canvasStore.fabricCanvas.zoomToPoint(new Point(windowWidth / 2, windowHeight / 2), 0.5);
 
   InteractiveFabricObject.ownDefaults = {
     ...InteractiveFabricObject.ownDefaults,
@@ -66,10 +60,7 @@ onMounted(() => {
     transparentCorners: false
   };
 
-  // HACK: workaround to show bg color on load
-  const rect = new Rect({ left: 0, top: 0, fill: "#ffffff", width: 0, height: 0, layerId: 0 });
-  canvasStore.fabricCanvas.add(rect);
-  canvasStore.fabricCanvas.remove(rect);
+  canvasStore.saveHistory();
 
   setupScroll(canvasStore.fabricCanvas, (zoom) => void (zoomLevel.value = zoom));
   setupMouseDown(
@@ -78,16 +69,28 @@ onMounted(() => {
     () => ({ fontSize: toolStore.fontSize, fontFamily: toolStore.fontFamily }),
     () => ({ primary: primaryColor.value, secondary: toolStore.secondaryColor }),
     () => activeLayerId.value,
+    () => layers.value.find((layer) => layer.id === activeLayerId.value),
     toolStore.setColor,
     useSetTool
   );
   setupBrushPreview(
     canvasStore.fabricCanvas,
     () => activeTool.value,
+    () => (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100,
     () => brushSize.value,
     () => primaryColor.value
   );
-  canvasStore.fabricCanvas.on("path:created", (event) => event.path.set({ layerId: activeLayerId.value }));
+  canvasStore.fabricCanvas.on("object:added", (event) => {
+    event.target.set({ uuid: v7() });
+    useSaveHistory(event);
+  });
+  canvasStore.fabricCanvas.on("object:modified", useSaveHistory);
+  canvasStore.fabricCanvas.on("object:removed", useSaveHistory);
+  canvasStore.fabricCanvas.on("path:created", (event) => {
+    event.path.set({ layerId: activeLayerId.value });
+    event.path.opacity = (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100;
+    canvasStore.saveHistory();
+  });
   window.addEventListener("paste", handlePasteHelper);
 
   useUpdateBrush();
@@ -103,4 +106,8 @@ function handlePasteHelper(event: ClipboardEvent) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.transparent-sprite {
+  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 4rem 4rem;
+}
+</style>

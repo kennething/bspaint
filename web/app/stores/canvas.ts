@@ -5,6 +5,16 @@ export type Layer = {
   name: string;
   isLocked: boolean;
   opacity: number;
+  dataUrl: string;
+};
+
+export type HistoryEntry = {
+  /** canvas representation in json string */
+  objects: string;
+  /** layers in json string */
+  layers: string;
+  layerIdCounter: number;
+  activeLayerId: number;
 };
 
 export const useCanvasStore = defineStore("canvasStore", () => {
@@ -13,12 +23,61 @@ export const useCanvasStore = defineStore("canvasStore", () => {
   const layerIdCounter = ref(2);
   const activeLayerId = ref(1);
 
+  const history = ref<HistoryEntry[]>([]);
+  const historyIndex = ref(-1);
+  const isHistoryProcessing = ref(false);
+  const canUndo = computed(() => !isHistoryProcessing.value && historyIndex.value > 0);
+  const canRedo = computed(() => !isHistoryProcessing.value && historyIndex.value < history.value.length - 1);
+
+  async function saveHistory() {
+    if (isHistoryProcessing.value || !fabricCanvas.value) return;
+
+    const canvasClone = await fabricCanvas.value.clone(["layerId", "uuid"]);
+    canvasClone.backgroundColor = "transparent";
+    canvasClone.forEachObject((obj) => {
+      if (obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
+      obj.opacity = 1;
+    });
+    layers.value.find((layer) => layer.id === activeLayerId.value)!.dataUrl = canvasClone.toDataURL({ format: "webp", multiplier: 1 });
+    canvasClone.dispose();
+
+    const jsonObjects = JSON.stringify(fabricCanvas.value.toDatalessJSON(["layerId", "uuid"]));
+    const jsonLayers = JSON.stringify(layers.value);
+    if (historyIndex.value < history.value.length - 1) history.value.splice(historyIndex.value + 1);
+
+    history.value.push({
+      objects: jsonObjects,
+      layers: jsonLayers,
+      layerIdCounter: layerIdCounter.value,
+      activeLayerId: activeLayerId.value
+    });
+    historyIndex.value = history.value.length - 1;
+  }
+  async function changeHistory(type: "undo" | "redo") {
+    if ((type === "undo" && !canUndo.value) || (type === "redo" && !canRedo.value)) return;
+    if (!fabricCanvas.value) return console.warn("changeHistory no fabricCanvas");
+    isHistoryProcessing.value = true;
+
+    historyIndex.value += type === "undo" ? -1 : 1;
+    const historyEntry = history.value[historyIndex.value];
+    if (!historyEntry) return console.warn("changeHistory no history entry for index", historyIndex.value);
+
+    await fabricCanvas.value.loadFromJSON(historyEntry.objects);
+    activeLayerId.value = historyEntry.activeLayerId;
+    layers.value = JSON.parse(historyEntry.layers);
+    layerIdCounter.value = historyEntry.layerIdCounter;
+    fabricCanvas.value.renderAll();
+
+    isHistoryProcessing.value = false;
+  }
+
   const layers = ref<Layer[]>([
     {
       id: 1,
       name: "Layer 1",
       isLocked: false,
-      opacity: 100
+      opacity: 100,
+      dataUrl: ""
     }
   ]);
   watch(
@@ -45,11 +104,13 @@ export const useCanvasStore = defineStore("canvasStore", () => {
       id: newId,
       name: `Layer ${newId}`,
       isLocked: false,
-      opacity: 100
+      opacity: 100,
+      dataUrl: ""
     });
     activeLayerId.value = newId;
 
     useSetTool(toolStore.activeTool);
+    saveHistory();
   }
   function switchLayer(layer: Layer) {
     if (!fabricCanvas.value) return console.warn("switchLayer no fabricCanvas");
@@ -63,9 +124,10 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     activeLayerId.value = layer.id;
 
     useSetTool(toolStore.activeTool);
+    saveHistory();
   }
-  function toggleLock(layer: Layer) {
-    if (!fabricCanvas.value) return console.warn("switchLayer no fabricCanvas");
+  function toggleLock(layer: Layer, newValue: boolean) {
+    if (!fabricCanvas.value) return console.warn("toggleLock no fabricCanvas");
     const toolStore = useToolStore();
 
     fabricCanvas.value.discardActiveObject();
@@ -73,9 +135,10 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     fabricCanvas.value.selection = false;
     fabricCanvas.value.isDrawingMode = false;
 
-    layer.isLocked = !layer.isLocked;
+    layer.isLocked = newValue;
 
     useSetTool(toolStore.activeTool);
+    saveHistory();
   }
   function deleteLayer(layer: Layer) {
     if (!fabricCanvas.value) return console.warn("deleteLayer no fabricCanvas");
@@ -90,11 +153,14 @@ export const useCanvasStore = defineStore("canvasStore", () => {
           id: 1,
           name: "Layer 1",
           isLocked: false,
-          opacity: 100
+          opacity: 100,
+          dataUrl: ""
         }
       ];
     if (activeLayerId.value === layer.id) activeLayerId.value = layers.value[0]!.id;
+
+    saveHistory();
   }
 
-  return { fabricCanvas, layerIdCounter, activeLayerId, layers, addLayer, switchLayer, toggleLock, deleteLayer };
+  return { fabricCanvas, layerIdCounter, activeLayerId, layers, addLayer, switchLayer, toggleLock, deleteLayer, history, historyIndex, canUndo, canRedo, saveHistory, changeHistory };
 });

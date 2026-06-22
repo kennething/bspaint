@@ -3,13 +3,16 @@
   prefix: "du-";
   logs: false;
 }
+@theme {
+  --color-sky-base: #f2f7f9;
+}
 
 * {
   font-family: "Comic Sans MS", fantasy;
 }
 
 html {
-  @apply overflow-scroll bg-sky-100 text-black;
+  @apply bg-sky-base overflow-scroll text-black;
   scrollbar-width: none;
 }
 
