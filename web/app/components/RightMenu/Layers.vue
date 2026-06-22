@@ -4,26 +4,39 @@
 
     <div
       v-for="layer in layers.toReversed()"
-      class="flex w-full flex-col items-center justify-center gap-2 rounded-xl px-3 py-2"
+      class="flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2"
       :class="layer.id === activeLayerId ? 'bg-neutral-200/65 hover:bg-neutral-300/50' : 'hover:bg-neutral-200/35'"
       role="button"
       @click="canvasStore.switchLayer(layer)"
     >
-      <div class="flex w-full items-center justify-center gap-3">
-        <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite h-12" />
+      <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite h-12 rounded" />
 
-        <div class="flex w-full items-center justify-center gap-1">
-          <img v-if="layer.isLocked" src="/icons/lock.svg" alt="This layer is locked" />
-          <h3 class="text-lg font-medium">{{ layer.name }}</h3>
-        </div>
+      <div class="flex w-full items-center justify-center gap-1">
+        <img v-if="layer.isLocked" src="/icons/lock.svg" alt="This layer is locked" />
+        <h3 class="text-lg font-medium">{{ layer.name }}</h3>
+      </div>
+    </div>
+
+    <div class="flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2 hover:bg-neutral-200/35" role="button" @click="showColorPicker = true">
+      <div class="h-12 w-20 rounded-xl" :style="{ backgroundColor }"></div>
+
+      <div class="flex w-full items-center justify-center gap-1">
+        <img src="/icons/lock.svg" alt="This layer is locked" />
+        <h3 class="text-lg font-medium">Background</h3>
       </div>
     </div>
   </GuiMenu>
+
+  <ColorPicker v-if="showColorPicker" @close="showColorPicker = false" editing-color="background" />
 </template>
 
 <script setup lang="ts">
 const canvasStore = useCanvasStore();
 const { layers, activeLayerId } = storeToRefs(canvasStore);
+const toolStore = useToolStore();
+const { backgroundColor } = storeToRefs(toolStore);
+
+const showColorPicker = ref(false);
 </script>
 
 <style scoped>

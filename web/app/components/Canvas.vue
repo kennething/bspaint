@@ -22,7 +22,7 @@ const canvasRef = useTemplateRef("canvas");
 const canvasStore = useCanvasStore();
 const { activeLayerId, layers } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { zoomLevel, activeTool, primaryColor, secondaryColor, brushSize } = storeToRefs(toolStore);
+const { backgroundColor, zoomLevel, activeTool, primaryColor, brushSize } = storeToRefs(toolStore);
 
 onMounted(() => {
   const windowWidth = window.innerWidth;
@@ -31,7 +31,7 @@ onMounted(() => {
   canvasStore.fabricCanvas = new Canvas(canvasRef.value ?? undefined, {
     width: windowWidth,
     height: windowHeight,
-    backgroundColor: "#ffffffff",
+    backgroundColor: backgroundColor.value,
     preserveObjectStacking: true,
     allowTouchScrolling: true,
     centeredKey: "altKey",
@@ -91,13 +91,13 @@ onMounted(() => {
     event.path.opacity = (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100;
     canvasStore.saveHistory();
   });
-  window.addEventListener("paste", handlePasteHelper);
+  document.addEventListener("paste", handlePasteHelper);
 
   useUpdateBrush();
 });
 
 onUnmounted(() => {
-  window.removeEventListener("paste", handlePasteHelper);
+  document.removeEventListener("paste", handlePasteHelper);
   if (canvasStore.fabricCanvas) canvasStore.fabricCanvas.dispose();
 });
 

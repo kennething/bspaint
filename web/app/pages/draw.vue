@@ -1,10 +1,8 @@
 <template>
   <div class="flex flex-col items-center justify-center">
-    <RightMenu />
-
+    <!-- <History /> -->
     <Canvas />
-
-    <History />
+    <RightMenu />
   </div>
 </template>
 

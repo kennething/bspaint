@@ -1,0 +1,29 @@
+/* single */
+
+@import "tailwindcss";
+@source "../**/*.{vue,ts}";
+@plugin "daisyui" {
+  prefix: "du-";
+  logs: false;
+}
+@theme {
+  --color-sky-base: #f2f7f9;
+}
+
+* {
+  font-family: "Comic Sans MS", fantasy;
+}
+
+html {
+  @apply bg-sky-base overflow-scroll text-black;
+  scrollbar-width: none;
+}
+
+button,
+div[role="button"] {
+  @apply cursor-pointer focus:outline-none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
