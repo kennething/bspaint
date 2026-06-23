@@ -1,16 +1,5 @@
 <template>
-  <!-- <div class="flex flex-col items-center justify-center gap-4 p-4">
-    <div class="flex items-center gap-2">
-      <button @click="useSetTool('select')" :class="{ 'bg-gray-300': activeTool === 'select' }">Select</button>
-      <button @click="useSetTool('brush')" :class="{ 'bg-gray-300': activeTool === 'brush' }">Brush</button>
-      <button @click="useSetTool('text')" :class="{ 'bg-gray-300': activeTool === 'text' }">Text</button>
-      <button @click="useSetTool('eyedropper')" :class="{ 'bg-gray-300': activeTool === 'eyedropper' }">Eyedropper</button>
-      <input type="color" v-model="primaryColor" title="Primary Color" />
-      <input type="color" v-model="secondaryColor" title="Secondary Color" />
-    </div>
-  </div> -->
-
-  <canvas ref="canvas" class="transparent-sprite"></canvas>
+  <canvas ref="canvas" class="transparent-sprite h-screen w-screen"></canvas>
 </template>
 
 <script setup lang="ts">
@@ -22,7 +11,7 @@ const canvasRef = useTemplateRef("canvas");
 const canvasStore = useCanvasStore();
 const { activeLayerId, layers } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { backgroundColor, zoomLevel, activeTool, primaryColor, brushSize } = storeToRefs(toolStore);
+const { backgroundColor } = storeToRefs(toolStore);
 
 onMounted(() => {
   const windowWidth = window.innerWidth;
@@ -45,7 +34,6 @@ onMounted(() => {
     enableRetinaScaling: false
   });
   canvasStore.fabricCanvas.isDrawingMode = true;
-  canvasStore.fabricCanvas.zoomToPoint(new Point(windowWidth / 2, windowHeight / 2), 0.5);
 
   InteractiveFabricObject.ownDefaults = {
     ...InteractiveFabricObject.ownDefaults,
@@ -62,24 +50,9 @@ onMounted(() => {
 
   canvasStore.saveHistory();
 
-  setupScroll(canvasStore.fabricCanvas, (zoom) => void (zoomLevel.value = zoom));
-  setupMouseDown(
-    canvasStore.fabricCanvas,
-    () => activeTool.value,
-    () => ({ fontSize: toolStore.fontSize, fontFamily: toolStore.fontFamily }),
-    () => ({ primary: primaryColor.value, secondary: toolStore.secondaryColor }),
-    () => activeLayerId.value,
-    () => layers.value.find((layer) => layer.id === activeLayerId.value),
-    toolStore.setColor,
-    useSetTool
-  );
-  setupBrushPreview(
-    canvasStore.fabricCanvas,
-    () => activeTool.value,
-    () => (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100,
-    () => brushSize.value,
-    () => primaryColor.value
-  );
+  useSetupScroll();
+  useSetupMouseDown();
+  useSetupBrushPreview();
   canvasStore.fabricCanvas.on("object:added", (event) => {
     event.target.set({ uuid: v7() });
     useSaveHistory(event);
@@ -91,19 +64,15 @@ onMounted(() => {
     event.path.opacity = (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100;
     canvasStore.saveHistory();
   });
-  document.addEventListener("paste", handlePasteHelper);
+  document.addEventListener("paste", useHandlePaste);
 
   useUpdateBrush();
 });
 
 onUnmounted(() => {
-  document.removeEventListener("paste", handlePasteHelper);
+  document.removeEventListener("paste", useHandlePaste);
   if (canvasStore.fabricCanvas) canvasStore.fabricCanvas.dispose();
 });
-
-function handlePasteHelper(event: ClipboardEvent) {
-  return handlePaste(canvasStore.fabricCanvas!, event, () => activeLayerId.value, useSetTool);
-}
 </script>
 
 <style scoped>

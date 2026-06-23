@@ -1,19 +1,24 @@
 <template>
-  <GuiMenu class="flex h-full w-full flex-col items-center justify-center gap-2 p-6">
-    <button @click="canvasStore.addLayer" class="w-full rounded-xl px-3 py-2 hover:bg-neutral-200/35">New Layer</button>
+  <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
+    <GuiMenu class="w-full rounded-full! px-1 py-0.5 backdrop-blur-none!">
+      <button @click="addLayer" class="w-full rounded-full px-3 py-2 hover:bg-neutral-200/35">New Layer</button>
+    </GuiMenu>
 
-    <div
-      v-for="layer in layers.toReversed()"
-      class="flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2"
-      :class="layer.id === activeLayerId ? 'bg-neutral-200/65 hover:bg-neutral-300/50' : 'hover:bg-neutral-200/35'"
-      role="button"
-      @click="canvasStore.switchLayer(layer)"
-    >
-      <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite h-12 rounded" />
+    <div v-auto-animate ref="layers-container" class="hide-scrollbar flex h-100 w-full flex-col-reverse items-center overflow-y-scroll">
+      <div
+        v-for="layer in layers"
+        :key="layer.id"
+        class="flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2"
+        :class="layer.id === activeLayerId ? 'bg-neutral-200/65 hover:bg-neutral-300/50' : 'hover:bg-neutral-200/35'"
+        role="button"
+        @click="canvasStore.switchLayer(layer)"
+      >
+        <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite h-12 rounded" />
 
-      <div class="flex w-full items-center justify-center gap-1">
-        <img v-if="layer.isLocked" src="/icons/lock.svg" alt="This layer is locked" />
-        <h3 class="text-lg font-medium">{{ layer.name }}</h3>
+        <div class="flex w-full items-center justify-center gap-1">
+          <img v-if="layer.isLocked" src="/icons/lock.svg" alt="This layer is locked" />
+          <h3 class="text-lg font-medium">{{ layer.name }}</h3>
+        </div>
       </div>
     </div>
 
@@ -31,12 +36,20 @@
 </template>
 
 <script setup lang="ts">
+const layersContainer = useTemplateRef("layers-container");
+
 const canvasStore = useCanvasStore();
 const { layers, activeLayerId } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
 const { backgroundColor } = storeToRefs(toolStore);
 
 const showColorPicker = ref(false);
+
+async function addLayer() {
+  canvasStore.addLayer();
+  await nextTick();
+  layersContainer.value?.scrollTo({ behavior: "smooth", top: -layersContainer.value.scrollHeight });
+}
 </script>
 
 <style scoped>

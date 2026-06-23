@@ -1,20 +1,33 @@
 <template>
   <Teleport to="body">
-    <GuiMenu class="fixed top-1/2 left-1/2 flex h-100 -translate-x-1/2 -translate-y-1/2 items-center justify-between gap-4 p-4">
-      <div class="flex h-full w-64 flex-col items-center justify-center gap-2">
-        <div class="spectrum-square relative h-full w-full cursor-crosshair rounded" ref="square" :style="{ backgroundColor: `hsl(${color.h}, 100%, 50%)` }" @mousedown="startDrag">
-          <div
-            class="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
-            :style="{ left: `${color.s * 100}%`, top: `${(1 - color.v) * 100}%` }"
-          ></div>
+    <GuiMenu do-transition class="fixed top-1/2 left-1/2 flex h-100 -translate-x-1/2 -translate-y-1/2 items-center justify-between gap-4 p-4 shadow-lg! shadow-neutral-400/50!" @click.stop>
+      <div class="flex h-full w-64 items-start justify-center gap-2">
+        <div class="flex h-full w-full flex-col items-center justify-center gap-2">
+          <div class="spectrum-square relative h-full w-full cursor-crosshair rounded" ref="square" :style="{ backgroundColor: `hsl(${color.h}, 100%, 50%)` }" @mousedown="startDrag">
+            <div
+              class="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+              :style="{ left: `${color.s * 100}%`, top: `${(1 - color.v) * 100}%` }"
+            ></div>
+          </div>
+
+          <input class="hue-slider h-2 w-full appearance-none rounded outline-none" type="range" min="0" max="360" v-model.number="color.h" @input="updateFromHsv" />
         </div>
 
-        <input class="hue-slider h-2 w-full appearance-none rounded outline-none" type="range" min="0" max="360" v-model.number="color.h" @input="updateFromHsv" />
+        <input
+          v-if="editingColor === 'background'"
+          type="range"
+          min="0"
+          max="100"
+          class="transparency-slider h-[calc(100%-1rem)] w-2 appearance-none rounded border border-neutral-300/50 outline-none"
+          :style="{ background: `linear-gradient(to bottom, rgba(${color.r},${color.g},${color.b},1), rgba(${color.r},${color.g},${color.b},0))` }"
+          v-model.number="color.a"
+          @input="updateAlpha"
+        />
       </div>
 
       <div class="flex h-full w-40 flex-col items-center justify-between">
         <div class="flex h-full w-full flex-col items-center justify-between">
-          <div class="h-20 w-full rounded-xl border" :style="{ backgroundColor: color.hex }"></div>
+          <div class="h-20 w-full rounded-xl border border-neutral-400/50" :style="{ backgroundColor: color.hex }"></div>
 
           <div class="flex items-center justify-center gap-1">
             <label for="hex" class="text-xs font-light">Hex</label>
@@ -42,10 +55,16 @@
                 <input id="blue" type="number" class="w-20 focus:outline-none" v-model.number="color.b" @change="updateFromRgb" min="0" max="255" />
               </GuiMenu>
             </div>
+            <div v-if="editingColor === 'background'" class="flex items-center justify-center gap-1">
+              <label for="alpha" class="text-xs font-light">Alpha</label>
+              <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
+                <input id="alpha" type="number" class="w-20 focus:outline-none" v-model.number="color.a" @change="updateFromRgb" min="0" max="100" />
+              </GuiMenu>
+            </div>
           </div>
         </div>
 
-        <div class="mt-20 flex w-full items-center justify-around">
+        <div class="mt-10 flex w-full items-center justify-around">
           <GuiMenu class="flex items-center justify-center rounded-full! px-0.5">
             <button @click="emit('close')" class="flex w-10 items-center justify-center rounded-full p-1 hover:bg-neutral-200/50" aria-label="Cancel">
               <img class="size-7" src="/icons/close.svg" aria-hidden="true" />
@@ -67,8 +86,6 @@
 const props = defineProps<{ editingColor: "primary" | "secondary" | "background" }>();
 const emit = defineEmits<{ close: [void] }>();
 
-const editingColor = ref<"primary" | "secondary" | "background">(props.editingColor);
-
 const toolStore = useToolStore();
 const { primaryColor, secondaryColor, backgroundColor } = storeToRefs(toolStore);
 
@@ -82,28 +99,31 @@ const color = reactive({
   r: 0,
   g: 0,
   b: 0,
+  a: 100,
   hex: "#000000"
 });
 watch(primaryColor, (newColor) => {
+  if (props.editingColor !== "primary") return;
   color.hex = newColor;
-  editingColor.value = "primary";
   updateFromHex();
 });
 watch(secondaryColor, (newColor) => {
+  if (props.editingColor !== "secondary") return;
   color.hex = newColor;
-  editingColor.value = "secondary";
   updateFromHex();
 });
 
 onBeforeMount(() => {
-  if (editingColor.value === "background") color.hex = backgroundColor.value;
-  else color.hex = editingColor.value === "primary" ? primaryColor.value : secondaryColor.value;
+  if (props.editingColor === "background") {
+    color.hex = backgroundColor.value;
+    color.a = hexToPercent(color.hex.slice(7, 9));
+  } else color.hex = props.editingColor === "primary" ? primaryColor.value : secondaryColor.value;
   updateFromHex();
 });
 
 function save() {
-  if (editingColor.value === "background") backgroundColor.value = color.hex;
-  else toolStore.setColor(editingColor.value, color.hex);
+  if (props.editingColor === "background") backgroundColor.value = color.hex;
+  else toolStore.setColor(props.editingColor, color.hex.slice(0, 7));
   emit("close");
 }
 
@@ -115,6 +135,7 @@ function updateFromHsv() {
   color.b = newB;
 
   color.hex = rgbToHex(newR, newG, newB);
+  if (props.editingColor === "background") color.hex += percentToHex(color.a);
 }
 function updateFromRgb() {
   color.r = Math.max(0, Math.min(255, color.r));
@@ -122,6 +143,7 @@ function updateFromRgb() {
   color.b = Math.max(0, Math.min(255, color.b));
 
   color.hex = rgbToHex(color.r, color.g, color.b);
+  color.hex += percentToHex(color.a);
 
   const [newH, newS, newV] = rgbToHsv(color.r, color.g, color.b);
   color.h = newH;
@@ -135,9 +157,9 @@ function updateFromHex() {
       .split("")
       .map((char) => char + char)
       .join("");
-  if (cleanHex.length !== 6) return;
+  if (props.editingColor === "background") cleanHex += percentToHex(color.a);
 
-  const [newR, newG, newB] = hexToRgb(cleanHex);
+  const [newR, newG, newB] = hexToRgb(cleanHex.slice(0, 6));
   color.r = newR;
   color.g = newG;
   color.b = newB;
@@ -148,6 +170,13 @@ function updateFromHex() {
   color.h = newH;
   color.s = newS;
   color.v = newV;
+}
+function updateAlpha() {
+  if (props.editingColor !== "background") return;
+
+  color.a = Math.max(0, Math.min(100, color.a));
+  color.hex += percentToHex(color.a);
+  updateFromHex();
 }
 
 function startDrag(event: MouseEvent) {
@@ -189,7 +218,13 @@ onUnmounted(stopDrag);
   background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
 }
 
-.hue-slider::-webkit-slider-thumb {
+.hue-slider::-webkit-slider-thumb,
+.transparency-slider::-webkit-slider-thumb {
   @apply size-4 cursor-pointer appearance-none rounded-full border border-neutral-700 bg-white shadow;
+}
+
+.transparency-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
 }
 </style>

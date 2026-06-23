@@ -1,6 +1,6 @@
 import { PencilBrush } from "fabric";
 
-/** updates brush settings to current primary color and size */
+/** updates brush settings to current primary/secondary color and size */
 export function useUpdateBrush() {
   const canvasStore = useCanvasStore();
   const { fabricCanvas: canvas } = storeToRefs(canvasStore);

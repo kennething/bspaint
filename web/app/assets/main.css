@@ -18,7 +18,17 @@ html {
 
 button,
 div[role="button"] {
-  @apply cursor-pointer focus:outline-none;
+  @apply cursor-pointer focus:outline-none active:scale-90 active:transition-transform;
+}
+button[disabled] {
+  @apply cursor-not-allowed! active:scale-100!;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button {
+  @apply appearance-none;
 }
 
 .hide-scrollbar {

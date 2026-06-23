@@ -1,11 +1,13 @@
+export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: add fill tool
+
 export const useToolStore = defineStore("toolStore", () => {
   const activeTool = ref<Tool>("brush");
   const zoomLevel = ref(1);
 
-  const backgroundColor = ref("#ffffffff");
+  const backgroundColor = ref("#FFFFFFFF");
   const primaryColor = ref("#000000");
-  const secondaryColor = ref("#ffffff");
-  const recentColors = ref<string[]>(new Array(10).fill("#000000"));
+  const secondaryColor = ref("#FFFFFF");
+  const recentColors = ref<string[]>(new Array(10).fill(""));
 
   const brushSize = ref(5);
 

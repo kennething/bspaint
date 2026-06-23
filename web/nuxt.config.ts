@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   css: ["~/assets/main.css"],
-  modules: ["@pinia/nuxt"],
+  modules: ["@pinia/nuxt", "@formkit/auto-animate/nuxt"],
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {

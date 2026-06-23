@@ -76,11 +76,29 @@ export function hsvToRgb(h: number, s: number, v: number): [r: number, g: number
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
+/** @returns hex with `#` at the start */
 export function rgbToHex(r: number, g: number, b: number): string {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
 
+/** @param hex hex without `#` */
 export function hexToRgb(hex: string): [r: number, g: number, b: number] {
   const bigint = parseInt(hex, 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+/** @returns hex without `#` */
+export function percentToHex(value: number): string {
+  const clamped = Math.min(100, Math.max(0, value));
+  const scaled = Math.round((clamped / 100) * 255);
+
+  return scaled.toString(16).padStart(2, "0").toUpperCase();
+}
+
+/** @param hex hex without `#` */
+export function hexToPercent(hex: string): number {
+  const value = parseInt(hex, 16);
+  if (Number.isNaN(value)) throw new Error("Invalid hex value");
+
+  return Math.round((value / 255) * 100);
 }
