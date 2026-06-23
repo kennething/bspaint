@@ -1,6 +1,5 @@
 .prettierrc.json
 app/app.vue
-app/assets/main.css
 app/components/Canvas.vue
 app/components/ColorPicker.vue
 app/components/Gui/Menu.vue
