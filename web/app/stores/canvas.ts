@@ -19,6 +19,7 @@ export type HistoryEntry = {
 
 export const useCanvasStore = defineStore("canvasStore", () => {
   const fabricCanvas = markRaw(shallowRef<Canvas>());
+  const mousePos = reactive({ x: 0, y: 0 });
 
   const layerIdCounter = ref(2);
   const activeLayerId = ref(1);
@@ -162,5 +163,5 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     saveHistory();
   }
 
-  return { fabricCanvas, layerIdCounter, activeLayerId, layers, addLayer, switchLayer, toggleLock, deleteLayer, history, historyIndex, canUndo, canRedo, saveHistory, changeHistory };
+  return { fabricCanvas, mousePos, layerIdCounter, activeLayerId, layers, addLayer, switchLayer, toggleLock, deleteLayer, history, historyIndex, canUndo, canRedo, saveHistory, changeHistory };
 });

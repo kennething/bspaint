@@ -9,7 +9,7 @@
       <GuiMenu class="flex items-center justify-center gap-2 rounded-full! px-1.5 backdrop-blur-none!">
         <img class="size-7 p-1" src="/icons/font.svg" aria-hidden="true" />
         <label for="font-family" class="sr-only">Font family</label>
-        <select id="font-family" class="w-full appearance-none rounded-full outline-none" v-model="fontFamily">
+        <select id="font-family" class="w-full appearance-none rounded-full outline-none" v-model="fontFamily" :style="{ fontFamily }">
           <option v-for="font in fonts" :value="font">{{ font }}</option>
         </select>
       </GuiMenu>

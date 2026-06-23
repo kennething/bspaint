@@ -7,8 +7,14 @@
   --color-sky-base: #f2f7f9;
 }
 
+@font-face {
+  font-family: "Happy Monkey";
+  src: url("/fonts/HappyMonkey-Regular.ttf") format("truetype");
+}
+
 * {
-  font-family: "Comic Sans MS", fantasy;
+  font-family: "Happy Monkey";
+  /* font-family: "Comic Sans MS", fantasy; */
 }
 
 html {

@@ -27,7 +27,6 @@
       </button>
     </GuiMenu>
 
-    <!-- TODO: style this and click eye icon to input number manually -->
     <GuiSlider name="Layer opacity" image="/icons/eye.svg" :min="0" :max="100" v-model="activeLayer.opacity" @on-change="canvasStore.saveHistory" />
   </div>
 </template>

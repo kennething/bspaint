@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { Canvas, InteractiveFabricObject, Point } from "fabric";
+import { Canvas, InteractiveFabricObject } from "fabric";
 import { v7 } from "uuid";
 
 const canvasRef = useTemplateRef("canvas");
@@ -52,7 +52,7 @@ onMounted(() => {
 
   useSetupScroll();
   useSetupMouseDown();
-  useSetupBrushPreview();
+  useSetupMouseMove();
   canvasStore.fabricCanvas.on("object:added", (event) => {
     event.target.set({ uuid: v7() });
     useSaveHistory(event);

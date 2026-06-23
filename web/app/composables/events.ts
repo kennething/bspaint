@@ -1,4 +1,4 @@
-import { Circle, FabricImage, IText, Point, type TPointerEventInfo } from "fabric";
+import { Circle, FabricImage, IText, Point, type TPointerEvent, type TPointerEventInfo } from "fabric";
 
 export function useSetupScroll() {
   const canvasStore = useCanvasStore();
@@ -98,16 +98,24 @@ export function useSetupMouseDown() {
   });
 }
 
-export function useSetupBrushPreview() {
+export function useSetupMouseMove() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, layers, activeLayerId, mousePos } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   const toolStore = useToolStore();
   const { activeTool, brushSize, primaryColor } = storeToRefs(toolStore);
 
   canvas.value.on("mouse:move", (event) => {
-    if (!canvas.value) return console.warn("setupBrushPreview no fabricCanvas");
+    handleMousePosTracking(event);
+    handleBrushPreview(event);
+  });
+  function handleMousePosTracking(event: TPointerEventInfo<TPointerEvent>) {
+    mousePos.value.x = event.scenePoint.x;
+    mousePos.value.y = event.scenePoint.y;
+  }
+  function handleBrushPreview(event: TPointerEventInfo<TPointerEvent>) {
+    if (!canvas.value) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
 
     if (activeTool.value === "brush") {
       const existing = canvas.value.getObjects().find((obj) => obj.name === "brushPreview");
@@ -128,7 +136,7 @@ export function useSetupBrushPreview() {
       canvas.value.add(brushPreview);
       canvas.value.requestRenderAll();
     } // brush
-  });
+  }
 }
 
 export function useResetZoom() {

@@ -13,9 +13,10 @@
     <label :for="`slider-${nameId}`" class="sr-only">{{ name }}</label>
     <input
       :id="`slider-${nameId}`"
-      class="slider-input du-tooltip du-tooltip-bottom h-1 w-full appearance-none rounded-full bg-neutral-200/80 outline-none"
+      class="slider-input du-tooltip h-1 w-full appearance-none rounded-full bg-neutral-200/80 outline-none"
+      :class="{ 'du-tooltip-bottom': !tooltipPosition || tooltipPosition === 'bottom' }"
       type="range"
-      :data-tip="model"
+      :data-tip="model?.toFixed(2)"
       :min="min"
       :max="max"
       :step="step"
@@ -32,6 +33,8 @@ const props = defineProps<{
   min: number;
   max: number;
   step?: number;
+  /** defaults to bottom */
+  tooltipPosition?: "top" | "bottom";
 }>();
 const emit = defineEmits<{
   "on-change": [void];

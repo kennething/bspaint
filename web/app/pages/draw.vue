@@ -1,9 +1,11 @@
 <template>
   <div class="flex flex-col items-center justify-center">
     <LeftMenu />
-    <RightMenu />
+    <LeftHud />
 
     <Canvas />
+
+    <RightMenu />
   </div>
 </template>
 

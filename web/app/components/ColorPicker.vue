@@ -29,36 +29,36 @@
         <div class="flex h-full w-full flex-col items-center justify-between">
           <div class="h-20 w-full rounded-xl border border-neutral-400/50" :style="{ backgroundColor: color.hex }"></div>
 
-          <div class="flex items-center justify-center gap-1">
+          <div class="flex items-center justify-center gap-2">
             <label for="hex" class="text-xs font-light">Hex</label>
             <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-              <input id="hex" type="text" class="w-32 focus:outline-none" v-model="color.hex" @change="updateFromHex" maxlength="6" />
+              <input id="hex" type="text" class="w-32 text-center focus:outline-none" v-model="color.hex" @change="updateFromHex" maxlength="6" />
             </GuiMenu>
           </div>
 
           <div class="flex flex-col items-end justify-center gap-1">
-            <div class="flex items-center justify-center gap-1">
+            <div class="flex items-center justify-center gap-2">
               <label for="red" class="text-xs font-light">Red</label>
               <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input id="red" type="number" class="w-20 focus:outline-none" v-model.number="color.r" @change="updateFromRgb" min="0" max="255" />
+                <input id="red" type="number" class="w-20 text-center focus:outline-none" v-model.number="color.r" @change="updateFromRgb" min="0" max="255" />
               </GuiMenu>
             </div>
-            <div class="flex items-center justify-center gap-1">
+            <div class="flex items-center justify-center gap-2">
               <label for="green" class="text-xs font-light">Green</label>
               <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input id="green" type="number" class="w-20 focus:outline-none" v-model.number="color.g" @change="updateFromRgb" min="0" max="255" />
+                <input id="green" type="number" class="w-20 text-center focus:outline-none" v-model.number="color.g" @change="updateFromRgb" min="0" max="255" />
               </GuiMenu>
             </div>
-            <div class="flex items-center justify-center gap-1">
+            <div class="flex items-center justify-center gap-2">
               <label for="blue" class="text-xs font-light">Blue</label>
               <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input id="blue" type="number" class="w-20 focus:outline-none" v-model.number="color.b" @change="updateFromRgb" min="0" max="255" />
+                <input id="blue" type="number" class="w-20 text-center focus:outline-none" v-model.number="color.b" @change="updateFromRgb" min="0" max="255" />
               </GuiMenu>
             </div>
-            <div v-if="editingColor === 'background'" class="flex items-center justify-center gap-1">
+            <div v-if="editingColor === 'background'" class="flex items-center justify-center gap-2">
               <label for="alpha" class="text-xs font-light">Alpha</label>
               <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input id="alpha" type="number" class="w-20 focus:outline-none" v-model.number="color.a" @change="updateFromRgb" min="0" max="100" />
+                <input id="alpha" type="number" class="w-20 text-center focus:outline-none" v-model.number="color.a" @change="updateFromRgb" min="0" max="100" />
               </GuiMenu>
             </div>
           </div>

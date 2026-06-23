@@ -1,7 +1,4 @@
-/* single */
-
 @import "tailwindcss";
-@source "../**/*.{vue,ts}";
 @plugin "daisyui" {
   prefix: "du-";
   logs: false;
@@ -10,8 +7,14 @@
   --color-sky-base: #f2f7f9;
 }
 
+@font-face {
+  font-family: "Happy Monkey";
+  src: url("/fonts/HappyMonkey-Regular.ttf") format("truetype");
+}
+
 * {
-  font-family: "Comic Sans MS", fantasy;
+  font-family: "Happy Monkey";
+  /* font-family: "Comic Sans MS", fantasy; */
 }
 
 html {
@@ -21,7 +24,17 @@ html {
 
 button,
 div[role="button"] {
-  @apply cursor-pointer focus:outline-none;
+  @apply cursor-pointer focus:outline-none active:scale-90 active:transition-transform;
+}
+button[disabled] {
+  @apply cursor-not-allowed! active:scale-100!;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button {
+  @apply appearance-none;
 }
 
 .hide-scrollbar {
