@@ -189,11 +189,17 @@ export function useHandlePaste(event: ClipboardEvent) {
 
 export function useHandleResize() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, canvasSize, showBoundingRect } = storeToRefs(canvasStore);
-  if (!canvas.value) return console.warn("handleResize no fabricCanvas");
+  const { canvasSize } = storeToRefs(canvasStore);
 
   canvasSize.value.width = window.innerWidth;
   canvasSize.value.height = window.innerHeight;
+  useRedrawBoundingRect();
+}
+
+export function useRedrawBoundingRect() {
+  const canvasStore = useCanvasStore();
+  const { fabricCanvas: canvas, canvasSize, showBoundingRect } = storeToRefs(canvasStore);
+  if (!canvas.value) return console.warn("handleResize no fabricCanvas");
 
   const existingBoundingRect = canvas.value.getObjects().find((obj) => obj.name === "boundingRect");
   if (existingBoundingRect) canvas.value.remove(existingBoundingRect);
@@ -224,10 +230,10 @@ export function useHandleResize() {
   canvas.value.sendObjectToBack(boundingRect);
 
   const boundingText = new IText(
-    "due to reasons, the actual canvas area cant be resized;\nonly things inside the canvas area will be exported.\n\nabove is a convenient red rectangle guide to make sure ur inside the canvas area.\nclick the coordinates in the bottom left to turn off the guide",
+    "only things INSIDE the canvas area will be exported.\nabove is a convenient red rectangle guide to make sure ur inside the canvas area.\nclick the coordinates in the bottom left to turn off the guide",
     {
       left: canvasSize.value.width / 2,
-      top: canvasSize.value.height + 300,
+      top: canvasSize.value.height + 175,
       fontSize: 80,
       fill: "#FF0000",
       selectable: false,

@@ -1,5 +1,5 @@
 <template>
-  <GuiMenu class="flex items-center justify-center gap-2 rounded-full! px-0.5 select-none" :class="{ 'border-red-200/70! bg-red-100/90!': !isInBounds }">
+  <GuiMenu class="flex items-center justify-center gap-2 rounded-full! px-0.5 select-none" :class="{ 'border-red-200/70! bg-red-100/50!': !isInBounds }">
     <button
       @click="toggleBoundingRect"
       class="flex w-full items-center justify-center gap-2 rounded-full p-1"

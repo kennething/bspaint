@@ -1,9 +1,14 @@
 <template>
-  <canvas ref="canvas" class="transparent-sprite h-screen w-screen"></canvas>
+  <div class="relative flex h-screen w-screen items-center justify-center">
+    <p class="absolute top-0 left-1/2 -translate-x-1/2 text-center text-2xl font-bold text-red-500">
+      unfortunately, if the canvas is smaller than ur screen, upscaling the canvas wont work as expected. so ur gonna have to work with this :(
+    </p>
+    <canvas ref="canvas" class="transparent-sprite h-full w-full"></canvas>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Canvas, InteractiveFabricObject, Rect } from "fabric";
+import { Canvas, InteractiveFabricObject } from "fabric";
 import { v7 } from "uuid";
 
 const canvasRef = useTemplateRef("canvas");
@@ -34,7 +39,7 @@ onMounted(() => {
     enableRetinaScaling: false
   });
 
-  useHandleResize();
+  useRedrawBoundingRect();
 
   InteractiveFabricObject.ownDefaults = {
     ...InteractiveFabricObject.ownDefaults,
