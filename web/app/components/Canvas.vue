@@ -3,23 +3,23 @@
 </template>
 
 <script setup lang="ts">
-import { Canvas, InteractiveFabricObject } from "fabric";
+import { Canvas, InteractiveFabricObject, Rect } from "fabric";
 import { v7 } from "uuid";
 
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();
-const { activeLayerId, layers } = storeToRefs(canvasStore);
+const { activeLayerId, layers, canvasSize } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
 const { backgroundColor } = storeToRefs(toolStore);
 
 onMounted(() => {
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  canvasSize.value.width = window.innerWidth;
+  canvasSize.value.height = window.innerHeight;
 
   canvasStore.fabricCanvas = new Canvas(canvasRef.value ?? undefined, {
-    width: windowWidth,
-    height: windowHeight,
+    width: canvasSize.value.width,
+    height: canvasSize.value.height,
     backgroundColor: backgroundColor.value,
     preserveObjectStacking: true,
     allowTouchScrolling: true,
@@ -33,7 +33,8 @@ onMounted(() => {
     controlsAboveOverlay: true,
     enableRetinaScaling: false
   });
-  canvasStore.fabricCanvas.isDrawingMode = true;
+
+  useHandleResize();
 
   InteractiveFabricObject.ownDefaults = {
     ...InteractiveFabricObject.ownDefaults,
@@ -53,6 +54,7 @@ onMounted(() => {
   useSetupScroll();
   useSetupMouseDown();
   useSetupMouseMove();
+
   canvasStore.fabricCanvas.on("object:added", (event) => {
     event.target.set({ uuid: v7() });
     useSaveHistory(event);
@@ -64,13 +66,17 @@ onMounted(() => {
     event.path.opacity = (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100;
     canvasStore.saveHistory();
   });
+
   document.addEventListener("paste", useHandlePaste);
+  window.addEventListener("resize", useHandleResize);
 
   useUpdateBrush();
+  canvasStore.fabricCanvas.isDrawingMode = true;
 });
 
 onUnmounted(() => {
   document.removeEventListener("paste", useHandlePaste);
+  window.removeEventListener("resize", useHandleResize);
   if (canvasStore.fabricCanvas) canvasStore.fabricCanvas.dispose();
 });
 </script>

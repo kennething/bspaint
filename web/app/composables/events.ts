@@ -1,4 +1,4 @@
-import { Circle, FabricImage, IText, Point, type TPointerEvent, type TPointerEventInfo } from "fabric";
+import { Circle, FabricImage, IText, Point, Rect, type TPointerEvent, type TPointerEventInfo } from "fabric";
 
 export function useSetupScroll() {
   const canvasStore = useCanvasStore();
@@ -185,4 +185,62 @@ export function useHandlePaste(event: ClipboardEvent) {
     };
     reader.readAsDataURL(blob);
   }
+}
+
+export function useHandleResize() {
+  const canvasStore = useCanvasStore();
+  const { fabricCanvas: canvas, canvasSize, showBoundingRect } = storeToRefs(canvasStore);
+  if (!canvas.value) return console.warn("handleResize no fabricCanvas");
+
+  canvasSize.value.width = window.innerWidth;
+  canvasSize.value.height = window.innerHeight;
+
+  const existingBoundingRect = canvas.value.getObjects().find((obj) => obj.name === "boundingRect");
+  if (existingBoundingRect) canvas.value.remove(existingBoundingRect);
+  const existingBoundingText = canvas.value.getObjects().find((obj) => obj.name === "boundingText");
+  if (existingBoundingText) canvas.value.remove(existingBoundingText);
+
+  canvas.value.setDimensions({
+    width: canvasSize.value.width,
+    height: canvasSize.value.height
+  });
+
+  const strokeWidth = 4 as const;
+  const boundingRect = new Rect({
+    left: canvasSize.value.width / 2,
+    top: canvasSize.value.height / 2,
+    width: canvasSize.value.width + strokeWidth,
+    height: canvasSize.value.height + strokeWidth,
+    fill: "transparent",
+    strokeWidth,
+    stroke: "#FF0000",
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+    name: "boundingRect",
+    opacity: showBoundingRect.value ? 1 : 0
+  });
+  canvas.value.add(boundingRect);
+  canvas.value.sendObjectToBack(boundingRect);
+
+  const boundingText = new IText(
+    "due to reasons, the actual canvas area cant be resized;\nonly things inside the canvas area will be exported.\n\nabove is a convenient red rectangle guide to make sure ur inside the canvas area.\nclick the coordinates in the bottom left to turn off the guide",
+    {
+      left: canvasSize.value.width / 2,
+      top: canvasSize.value.height + 300,
+      fontSize: 80,
+      fill: "#FF0000",
+      selectable: false,
+      evented: false,
+      excludeFromExport: true,
+      name: "boundingText",
+      opacity: showBoundingRect.value ? 1 : 0,
+      fontFamily: "Happy Monkey",
+      textAlign: "center"
+    }
+  );
+  canvas.value.add(boundingText);
+  canvas.value.sendObjectToBack(boundingText);
+
+  canvas.value.requestRenderAll();
 }

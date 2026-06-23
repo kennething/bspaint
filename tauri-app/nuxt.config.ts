@@ -21,6 +21,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/main.css"],
   modules: ["@pinia/nuxt", "@formkit/auto-animate/nuxt"],
+  runtimeConfig: {
+    public: {
+      minZoom: 0.1,
+      maxZoom: 50
+    }
+  },
   app: {
     head: {
       title: "BS Paint",

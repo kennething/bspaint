@@ -1,4 +1,7 @@
+/* single */
+
 @import "tailwindcss";
+@source "../**/*.{vue,ts}";
 @plugin "daisyui" {
   prefix: "du-";
   logs: false;

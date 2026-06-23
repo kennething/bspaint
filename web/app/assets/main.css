@@ -1,3 +1,5 @@
+/* single */
+
 @import "tailwindcss";
 @plugin "daisyui" {
   prefix: "du-";

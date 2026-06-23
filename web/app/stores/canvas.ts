@@ -20,6 +20,8 @@ export type HistoryEntry = {
 export const useCanvasStore = defineStore("canvasStore", () => {
   const fabricCanvas = markRaw(shallowRef<Canvas>());
   const mousePos = reactive({ x: 0, y: 0 });
+  const canvasSize = reactive({ width: 0, height: 0 });
+  const showBoundingRect = ref(true);
 
   const layerIdCounter = ref(2);
   const activeLayerId = ref(1);
@@ -36,7 +38,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     const canvasClone = await fabricCanvas.value.clone(["layerId", "uuid"]);
     canvasClone.backgroundColor = "transparent";
     canvasClone.forEachObject((obj) => {
-      if (obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
+      if (!obj.excludeFromExport && obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
       obj.opacity = 1;
     });
     layers.value.find((layer) => layer.id === activeLayerId.value)!.dataUrl = canvasClone.toDataURL({ format: "webp", multiplier: 1 });
@@ -88,6 +90,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
 
       fabricCanvas.value.getObjects().forEach((obj) => {
         const layer = layers.value.find((l) => l.id === obj.layerId);
+        if (obj.excludeFromExport) return;
         if (!layer) return fabricCanvas.value?.remove(obj);
         obj.set({ opacity: layer.opacity / 100 });
       });
@@ -163,5 +166,23 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     saveHistory();
   }
 
-  return { fabricCanvas, mousePos, layerIdCounter, activeLayerId, layers, addLayer, switchLayer, toggleLock, deleteLayer, history, historyIndex, canUndo, canRedo, saveHistory, changeHistory };
+  return {
+    fabricCanvas,
+    mousePos,
+    canvasSize,
+    showBoundingRect,
+    layerIdCounter,
+    activeLayerId,
+    layers,
+    addLayer,
+    switchLayer,
+    toggleLock,
+    deleteLayer,
+    history,
+    historyIndex,
+    canUndo,
+    canRedo,
+    saveHistory,
+    changeHistory
+  };
 });

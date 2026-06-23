@@ -122,8 +122,10 @@ onBeforeMount(() => {
 });
 
 function save() {
-  if (props.editingColor === "background") backgroundColor.value = color.hex;
-  else toolStore.setColor(props.editingColor, color.hex.slice(0, 7));
+  if (props.editingColor === "background") {
+    backgroundColor.value = color.hex;
+    useHandleResize();
+  } else toolStore.setColor(props.editingColor, color.hex.slice(0, 7));
   emit("close");
 }
 
