@@ -1,11 +1,16 @@
 <template>
   <div class="flex items-center justify-center gap-2 rounded-full">
-    <GuiSlider name="Zoom level" image="/icons/zoom.svg" :min="config.public.minZoom" :max="config.public.maxZoom" :step="0.1" tooltip-position="top" v-model="tempZoom" />
-    <GuiMenu class="flex items-center justify-center rounded-full! px-0.5">
-      <button @click="useResetZoom" class="flex w-8 items-center justify-center rounded-full p-1 hover:bg-neutral-200/50" aria-label="Reset zoom">
-        <img class="size-5" src="/icons/zoom-out.svg" aria-hidden="true" />
-      </button>
-    </GuiMenu>
+    <GuiSlider
+      name="Zoom level"
+      image="/icons/zoom.svg"
+      is-skewed
+      :min="config.public.minZoom"
+      :max="config.public.maxZoom"
+      tooltip-position="top"
+      v-model="tempZoom"
+      :tooltip-format="(val) => `${val.toFixed(2)}x`"
+    />
+    <GuiButtonSingle image="/icons/zoom-out.svg" label="Reset zoom" @clicked="useResetZoom" />
   </div>
 </template>
 

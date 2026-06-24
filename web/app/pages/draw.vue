@@ -6,6 +6,7 @@
     <Canvas />
 
     <RightMenu />
+    <RightHud />
   </div>
 </template>
 

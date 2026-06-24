@@ -69,6 +69,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     activeLayerId.value = historyEntry.activeLayerId;
     layers.value = JSON.parse(historyEntry.layers);
     layerIdCounter.value = historyEntry.layerIdCounter;
+    useRedrawBoundingRect();
     fabricCanvas.value.renderAll();
 
     isHistoryProcessing.value = false;

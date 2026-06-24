@@ -1,26 +1,8 @@
 <template>
-  <div class="flex items-center justify-around gap-2">
-    <GuiMenu class="flex items-center justify-center gap-0.5 rounded-full! px-0.5">
-      <button
-        @click="canvasStore.changeHistory('undo')"
-        class="flex w-8 items-center justify-center rounded-full p-1"
-        :class="canUndo ? 'hover:bg-neutral-200/50' : 'opacity-30'"
-        :disabled="!canUndo"
-        aria-label="Undo the last action"
-      >
-        <img class="size-5" src="/icons/undo.svg" aria-hidden="true" />
-      </button>
-      <button
-        @click="canvasStore.changeHistory('redo')"
-        class="flex w-8 items-center justify-center rounded-full p-1"
-        :class="canRedo ? 'hover:bg-neutral-200/50' : 'opacity-30'"
-        :disabled="!canRedo"
-        aria-label="Redo the last action"
-      >
-        <img class="size-5" src="/icons/redo.svg" aria-hidden="true" />
-      </button>
-    </GuiMenu>
-  </div>
+  <GuiButtonGroup>
+    <GuiInnerButton image="/icons/undo.svg" label="Undo the last action" :is-disabled="!canUndo" @clicked="canvasStore.changeHistory('undo')" />
+    <GuiInnerButton image="/icons/redo.svg" label="Redo the last action" :is-disabled="!canRedo" @clicked="canvasStore.changeHistory('redo')" />
+  </GuiButtonGroup>
 </template>
 
 <script setup lang="ts">

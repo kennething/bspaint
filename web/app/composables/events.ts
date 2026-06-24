@@ -39,7 +39,42 @@ export function useSetupScroll() {
     currentTransform[4] -= event.e.deltaX;
     currentTransform[5] -= event.e.deltaY;
     canvas.value.zoomToPoint(new Point(event.e.offsetX, event.e.offsetY), canvas.value.getZoom());
+
+    handleMousePosTracking(event);
+    handleBrushPreview(event);
   }
+}
+function handleMousePosTracking(event: TPointerEventInfo<TPointerEvent | WheelEvent>) {
+  const canvasStore = useCanvasStore();
+
+  canvasStore.mousePos.x = event.scenePoint.x;
+  canvasStore.mousePos.y = event.scenePoint.y;
+}
+function handleBrushPreview(event: TPointerEventInfo<TPointerEvent | WheelEvent>) {
+  const canvasStore = useCanvasStore();
+  const toolStore = useToolStore();
+
+  if (!canvasStore.fabricCanvas) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
+
+  if (toolStore.activeTool === "brush") {
+    const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "brushPreview");
+    if (existing) canvasStore.fabricCanvas.remove(existing);
+
+    const brushPreview = new Circle({
+      left: event.scenePoint.x,
+      top: event.scenePoint.y,
+      radius: toolStore.brushSize / 2 - 0.5,
+      fill: toolStore.primaryColor,
+      stroke: toolStore.primaryColor,
+      selectable: false,
+      evented: false,
+      excludeFromExport: true,
+      name: "brushPreview",
+      opacity: (canvasStore.layers.find((layer) => layer.id === canvasStore.activeLayerId)?.opacity ?? 100) / 100
+    });
+    canvasStore.fabricCanvas.add(brushPreview);
+    canvasStore.fabricCanvas.requestRenderAll();
+  } // brush
 }
 
 export function useSetupMouseDown() {
@@ -100,43 +135,13 @@ export function useSetupMouseDown() {
 
 export function useSetupMouseMove() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers, activeLayerId, mousePos } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
-
-  const toolStore = useToolStore();
-  const { activeTool, brushSize, primaryColor } = storeToRefs(toolStore);
 
   canvas.value.on("mouse:move", (event) => {
     handleMousePosTracking(event);
     handleBrushPreview(event);
   });
-  function handleMousePosTracking(event: TPointerEventInfo<TPointerEvent>) {
-    mousePos.value.x = event.scenePoint.x;
-    mousePos.value.y = event.scenePoint.y;
-  }
-  function handleBrushPreview(event: TPointerEventInfo<TPointerEvent>) {
-    if (!canvas.value) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
-
-    if (activeTool.value === "brush") {
-      const existing = canvas.value.getObjects().find((obj) => obj.name === "brushPreview");
-      if (existing) canvas.value.remove(existing);
-
-      const brushPreview = new Circle({
-        left: event.scenePoint.x,
-        top: event.scenePoint.y,
-        radius: brushSize.value / 2 - 0.5,
-        fill: primaryColor.value,
-        stroke: primaryColor.value,
-        selectable: false,
-        evented: false,
-        excludeFromExport: true,
-        name: "brushPreview",
-        opacity: (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100
-      });
-      canvas.value.add(brushPreview);
-      canvas.value.requestRenderAll();
-    } // brush
-  }
 }
 
 export function useResetZoom() {
@@ -189,11 +194,12 @@ export function useHandlePaste(event: ClipboardEvent) {
 
 export function useHandleResize() {
   const canvasStore = useCanvasStore();
-  const { canvasSize } = storeToRefs(canvasStore);
+  const { fabricCanvas } = storeToRefs(canvasStore);
 
-  canvasSize.value.width = window.innerWidth;
-  canvasSize.value.height = window.innerHeight;
-  useRedrawBoundingRect();
+  fabricCanvas.value?.setDimensions({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
 }
 
 export function useRedrawBoundingRect() {
