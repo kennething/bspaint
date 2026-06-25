@@ -212,11 +212,6 @@ export function useRedrawBoundingRect() {
   const existingBoundingText = canvas.value.getObjects().find((obj) => obj.name === "boundingText");
   if (existingBoundingText) canvas.value.remove(existingBoundingText);
 
-  canvas.value.setDimensions({
-    width: canvasSize.value.width,
-    height: canvasSize.value.height
-  });
-
   const strokeWidth = 4 as const;
   const boundingRect = new Rect({
     left: canvasSize.value.width / 2,

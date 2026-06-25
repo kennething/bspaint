@@ -13,7 +13,7 @@
         role="button"
         @click="canvasStore.switchLayer(layer)"
       >
-        <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite h-12 rounded" />
+        <img :src="layer.dataUrl" aria-hidden="true" class="transparent-sprite-sm h-12 rounded" />
 
         <div class="flex w-full items-center justify-center gap-1">
           <img v-if="layer.isLocked" src="/icons/lock.svg" alt="This layer is locked" />
@@ -52,8 +52,4 @@ async function addLayer() {
 }
 </script>
 
-<style scoped>
-.transparent-sprite {
-  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 1rem 1rem;
-}
-</style>
+<style scoped></style>

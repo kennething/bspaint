@@ -42,3 +42,10 @@ input[type="number"]::-webkit-inner-spin-button {
 .hide-scrollbar {
   scrollbar-width: none;
 }
+
+.transparent-sprite {
+  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 4rem 4rem;
+}
+.transparent-sprite-sm {
+  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 1rem 1rem;
+}

@@ -1,6 +1,6 @@
 <template>
   <GuiMenu class="flex items-center justify-center rounded-full! px-0.5">
-    <GuiInnerButton @clicked="emit('clicked')" :image="image" :label="label" />
+    <GuiInnerButton :class="innerClassOverride" @clicked="emit('clicked')" :image="image" :label="label" :is-disabled="isDisabled" />
   </GuiMenu>
 </template>
 
@@ -10,6 +10,8 @@ const props = defineProps<{
   label: string;
   isActive?: boolean;
   isDisabled?: boolean;
+  /** applies classes to the <GuiInnerButton/> within this component */
+  innerClassOverride?: string;
 }>();
 const emit = defineEmits<{
   clicked: [void];

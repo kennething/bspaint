@@ -2,7 +2,7 @@
   <button
     @click="emit('clicked')"
     class="flex w-8 items-center justify-center rounded-full p-1"
-    :class="[isActive ? 'bg-neutral-200/90 hover:bg-neutral-300/75' : 'hover:bg-neutral-200/50', { 'opacity-30 hover:bg-transparent!': isDisabled }]"
+    :class="isDisabled ? 'opacity-30 hover:bg-transparent!' : isActive ? 'bg-neutral-200/90 hover:bg-neutral-300/75' : 'hover:bg-neutral-200/50'"
     :aria-label="label"
     :disabled="isDisabled"
   >

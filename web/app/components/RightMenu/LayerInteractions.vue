@@ -7,7 +7,7 @@
 
     <GuiButtonSingle image="/icons/delete.svg" label="Delete the active layer" @clicked="canvasStore.deleteLayer(activeLayer)" />
 
-    <GuiSlider name="Layer opacity" image="/icons/eye.svg" :min="0" :max="100" v-model="activeLayer.opacity" @on-change="canvasStore.saveHistory" :tooltip-format="(value) => `${value}%`" />
+    <GuiSlider name="Layer opacity" image="/icons/eye.svg" :min="0" :max="100" v-model="activeLayer.opacity" @on-change="canvasStore.saveHistory('none')" :tooltip-format="(value) => `${value}%`" />
   </div>
 </template>
 

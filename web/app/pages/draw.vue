@@ -10,6 +10,8 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// TODO: keyboard shortcuts
+</script>
 
 <style scoped></style>

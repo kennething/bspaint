@@ -25,7 +25,7 @@ const isInBounds = computed(() => {
 
 function toggleBoundingRect() {
   showBoundingRect.value = !showBoundingRect.value;
-  useHandleResize();
+  useRedrawBoundingRect();
 }
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <GuiButtonSingle image="/icons/resize.svg" label="Resize the canvas" @clicked="showResizeModal = true" />
 
-  <RightHudResizeModal v-if="showResizeModal" />
+  <RightHudResizeModal v-if="showResizeModal" @close="showResizeModal = false" />
 </template>
 
 <script setup lang="ts">

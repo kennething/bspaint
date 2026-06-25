@@ -2,9 +2,11 @@
 app/app.vue
 app/components/Canvas.vue
 app/components/ColorPicker.vue
+app/components/Gui/ButtonGroup.vue
+app/components/Gui/ButtonSingle.vue
+app/components/Gui/InnerButton.vue
 app/components/Gui/Menu.vue
 app/components/Gui/Slider.vue
-app/components/History.vue
 app/components/LeftHud/LeftHud.vue
 app/components/LeftHud/Position.vue
 app/components/LeftHud/Zoom.vue
@@ -13,9 +15,15 @@ app/components/LeftMenu/History.vue
 app/components/LeftMenu/LeftMenu.vue
 app/components/LeftMenu/Modifiers.vue
 app/components/LeftMenu/Tools.vue
+app/components/RightHud/Export.vue
+app/components/RightHud/ExportModal.vue
+app/components/RightHud/Resize.vue
+app/components/RightHud/ResizeModal.vue
+app/components/RightHud/RightHud.vue
 app/components/RightMenu/LayerInteractions.vue
 app/components/RightMenu/Layers.vue
 app/components/RightMenu/RightMenu.vue
+app/composables/canvas.ts
 app/composables/events.ts
 app/composables/history.ts
 app/composables/tools.ts
@@ -25,8 +33,6 @@ app/stores/canvas.ts
 app/stores/tools.ts
 app/utils/colors.ts
 app/utils/fonts.ts
-app/utils/tools.ts
-app/utils/utils.ts
 index.d.ts
 public/bspaint.svg
 public/fonts/HappyMonkey-Regular.ttf
@@ -41,6 +47,8 @@ public/icons/eyedropper.svg
 public/icons/font.svg
 public/icons/lock.svg
 public/icons/redo.svg
+public/icons/resize.svg
+public/icons/save.svg
 public/icons/select.svg
 public/icons/swap.svg
 public/icons/text-size.svg

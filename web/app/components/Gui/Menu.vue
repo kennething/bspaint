@@ -9,7 +9,7 @@
 <script setup lang="ts">
 const props = defineProps<{ doTransition?: boolean }>();
 const showTransition = ref(!props.doTransition);
-
+// TODO: add tooltips
 onMounted(() => (showTransition.value = true));
 </script>
 

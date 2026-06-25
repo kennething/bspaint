@@ -1,4 +1,4 @@
-export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: add fill tool
+export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: fill, rectangle? circle? -shapes
 
 export const useToolStore = defineStore("toolStore", () => {
   const activeTool = ref<Tool>("brush");

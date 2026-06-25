@@ -13,6 +13,10 @@ export type HistoryEntry = {
   objects: string;
   /** layers in json string */
   layers: string;
+  canvasSize: {
+    width: number;
+    height: number;
+  };
   layerIdCounter: number;
   activeLayerId: number;
 };
@@ -32,17 +36,10 @@ export const useCanvasStore = defineStore("canvasStore", () => {
   const canUndo = computed(() => !isHistoryProcessing.value && historyIndex.value > 0);
   const canRedo = computed(() => !isHistoryProcessing.value && historyIndex.value < history.value.length - 1);
 
-  async function saveHistory() {
+  async function saveHistory(redrawLayerType: "all" | "active" | "none" = "active") {
     if (isHistoryProcessing.value || !fabricCanvas.value) return;
 
-    const canvasClone = await fabricCanvas.value.clone(["layerId", "uuid"]);
-    canvasClone.backgroundColor = "transparent";
-    canvasClone.forEachObject((obj) => {
-      if (!obj.excludeFromExport && obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
-      obj.opacity = 1;
-    });
-    layers.value.find((layer) => layer.id === activeLayerId.value)!.dataUrl = canvasClone.toDataURL({ format: "webp", multiplier: 1 });
-    canvasClone.dispose();
+    if (redrawLayerType !== "none") redrawLayerPreview(redrawLayerType);
 
     const jsonObjects = JSON.stringify(fabricCanvas.value.toDatalessJSON(["layerId", "uuid"]));
     const jsonLayers = JSON.stringify(layers.value);
@@ -51,6 +48,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     history.value.push({
       objects: jsonObjects,
       layers: jsonLayers,
+      canvasSize: { ...canvasSize },
       layerIdCounter: layerIdCounter.value,
       activeLayerId: activeLayerId.value
     });
@@ -66,9 +64,11 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     if (!historyEntry) return console.warn("changeHistory no history entry for index", historyIndex.value);
 
     await fabricCanvas.value.loadFromJSON(historyEntry.objects);
-    activeLayerId.value = historyEntry.activeLayerId;
     layers.value = JSON.parse(historyEntry.layers);
+    canvasSize.width = historyEntry.canvasSize.width;
+    canvasSize.height = historyEntry.canvasSize.height;
     layerIdCounter.value = historyEntry.layerIdCounter;
+    activeLayerId.value = historyEntry.activeLayerId;
     useRedrawBoundingRect();
     fabricCanvas.value.renderAll();
 
@@ -166,6 +166,45 @@ export const useCanvasStore = defineStore("canvasStore", () => {
 
     saveHistory();
   }
+  async function redrawLayerPreview(type: "all" | "active") {
+    if (!fabricCanvas.value) return console.warn("redrawLayerPreview no fabricCanvas");
+
+    const canvasClone = await fabricCanvas.value.clone(["layerId", "uuid"]);
+    canvasClone.backgroundColor = "transparent";
+
+    if (type === "active") {
+      canvasClone.forEachObject((obj) => {
+        if (!obj.excludeFromExport && obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
+        obj.opacity = 1;
+      });
+      layers.value.find((layer) => layer.id === activeLayerId.value)!.dataUrl = canvasClone.toDataURL({
+        format: "webp",
+        multiplier: 1,
+        top: 0,
+        left: 0,
+        width: canvasSize.width,
+        height: canvasSize.height
+      });
+    } // active
+    else {
+      for (const layer of layers.value) {
+        if (layer.opacity === 0) continue;
+
+        canvasClone.forEachObject((obj) => {
+          obj.opacity = obj.excludeFromExport || obj.layerId !== layer.id ? 0 : 1;
+        });
+        layer.dataUrl = canvasClone.toDataURL({
+          format: "webp",
+          multiplier: 1,
+          top: 0,
+          left: 0,
+          width: canvasSize.width,
+          height: canvasSize.height
+        });
+      }
+    } // all
+    canvasClone.dispose();
+  }
 
   return {
     fabricCanvas,
@@ -179,6 +218,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     switchLayer,
     toggleLock,
     deleteLayer,
+    redrawLayerPreview,
     history,
     historyIndex,
     canUndo,

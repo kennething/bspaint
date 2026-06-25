@@ -1,30 +1,41 @@
-export async function useCanvasToImage() {
+/** returns the actual svg string if `to` is `svg`
+ *
+ * returns a blob url if `to` is `png`, `jpg`, or `webp`
+ */
+export async function useCanvasToImage(to: "svg" | "png" | "jpg" | "webp"): Promise<string> {
   const canvasStore = useCanvasStore();
   const { fabricCanvas: canvas, canvasSize } = storeToRefs(canvasStore);
 
-  const stripped = await canvas.value!.clone([]);
-  stripped.forEachObject((obj) => {
-    const left = obj.getX();
-    const top = obj.getY();
-
-    const width = obj.width * obj.scaleX;
-    const height = obj.height * obj.scaleY;
-
-    const topLeft: [x: number, y: number] = [left - width / 2, top - height / 2];
-    const bottomLeft: [x: number, y: number] = [left - width / 2, top + height / 2];
-    const topRight: [x: number, y: number] = [left + width / 2, top - height / 2];
-    const bottomRight: [x: number, y: number] = [left + width / 2, top + height / 2];
-    const points = [topLeft, bottomLeft, topRight, bottomRight];
-
-    // TODO: fix
-    const isOutsideCanvas = points.every(([x, y]) => x < 0 || x > canvasSize.value.width || y < 0 || y > canvasSize.value.height);
-    if (isOutsideCanvas) stripped.remove(obj);
-  });
-
-  return stripped.toSVG({
+  const svg = canvas.value!.toSVG({
     suppressPreamble: true,
     width: `${canvasSize.value.width}px`,
     height: `${canvasSize.value.height}px`,
     viewBox: { x: 0, y: 0, width: canvasSize.value.width, height: canvasSize.value.height }
+  });
+
+  if (to === "svg") return svg;
+
+  // * cant just do canvas.toDataUrl cuz need good cropping
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+
+    const image = new Image();
+    image.src = url;
+    image.onerror = reject;
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvasSize.value.width;
+      canvas.height = canvasSize.value.height;
+
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(image, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error("useCanvasToImage no blob"));
+        resolve(URL.createObjectURL(blob));
+      }, `image/${to}`);
+    };
   });
 }

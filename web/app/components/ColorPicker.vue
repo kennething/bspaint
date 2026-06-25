@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <GuiMenu do-transition class="fixed top-1/2 left-1/2 flex h-100 -translate-x-1/2 -translate-y-1/2 items-center justify-between gap-4 p-4 shadow-lg! shadow-neutral-400/50!" @click.stop>
+    <GuiMenu do-transition class="fixed top-1/2 left-1/2 z-20 flex h-100 -translate-x-1/2 -translate-y-1/2 items-center justify-between gap-4 p-4 shadow-lg! shadow-neutral-400/50!" @click.stop>
       <div class="flex h-full w-64 items-start justify-center gap-2">
         <div class="flex h-full w-full flex-col items-center justify-center gap-2">
           <div class="spectrum-square relative h-full w-full cursor-crosshair rounded" ref="square" :style="{ backgroundColor: `hsl(${color.h}, 100%, 50%)` }" @mousedown="startDrag">
@@ -27,7 +27,9 @@
 
       <div class="flex h-full w-40 flex-col items-center justify-between">
         <div class="flex h-full w-full flex-col items-center justify-between">
-          <div class="h-20 w-full rounded-xl border border-neutral-400/50" :style="{ backgroundColor: color.hex }"></div>
+          <div class="transparent-sprite-sm flex h-20 w-full items-center justify-center overflow-hidden rounded-xl border border-neutral-400/50">
+            <div class="h-full w-full" :style="{ backgroundColor: color.hex }"></div>
+          </div>
 
           <div class="flex items-center justify-center gap-2">
             <label for="hex" class="text-xs font-light">Hex</label>
@@ -65,17 +67,14 @@
         </div>
 
         <div class="mt-10 flex w-full items-center justify-around">
-          <GuiMenu class="flex items-center justify-center rounded-full! px-0.5">
-            <button @click="emit('close')" class="flex w-10 items-center justify-center rounded-full p-1 hover:bg-neutral-200/50" aria-label="Cancel">
-              <img class="size-7" src="/icons/close.svg" aria-hidden="true" />
-            </button>
-          </GuiMenu>
-
-          <GuiMenu class="flex items-center justify-center rounded-full! px-0.5">
-            <button @click="save" class="flex w-10 items-center justify-center rounded-full p-1 hover:bg-neutral-200/50" aria-label="Cancel">
-              <img class="size-7" src="/icons/check.svg" aria-hidden="true" />
-            </button>
-          </GuiMenu>
+          <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
+          <GuiButtonSingle
+            class="border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!"
+            inner-class-override="hover:bg-blue-200/50!"
+            image="/icons/check.svg"
+            label="Confirm"
+            @clicked="save"
+          />
         </div>
       </div>
     </GuiMenu>

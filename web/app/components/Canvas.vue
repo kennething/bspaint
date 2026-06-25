@@ -1,9 +1,6 @@
 <template>
-  <div class="relative flex h-screen w-screen items-center justify-center">
-    <p class="absolute top-0 left-1/2 -translate-x-1/2 text-center text-2xl font-bold text-red-500">
-      unfortunately, if the canvas is smaller than ur screen, upscaling the canvas wont work as expected. so ur gonna have to work with this :(
-    </p>
-    <canvas ref="canvas" class="transparent-sprite h-full w-full"></canvas>
+  <div class="transparent-sprite relative flex h-screen w-screen items-center justify-center">
+    <canvas ref="canvas" class="h-full w-full"></canvas>
   </div>
 </template>
 
@@ -86,8 +83,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-.transparent-sprite {
-  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 4rem 4rem;
-}
-</style>
+<style scoped></style>

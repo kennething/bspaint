@@ -15,7 +15,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       minZoom: 0.1,
-      maxZoom: 50
+      maxZoom: 50,
+      minCanvasSize: 1,
+      maxCanvasSize: 4200
     }
   },
   app: {
