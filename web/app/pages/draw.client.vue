@@ -112,17 +112,15 @@ function handleKeyDown(event: KeyboardEvent) {
   } // togle canvas guide
   else if (validKeybind.action === "Tool Size Down") {
     const tool = toolStore.activeTool;
-    if (tool === "brush") {
-      toolStore.brushSize = Math.max(toolStore.brushSize - 1, config.public.minBrushSize);
-      useUpdateBrush();
-    } else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
+    if (tool === "brush")
+      toolStore.brushSize = Math.max(toolStore.brushSize - 1, config.public.minBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
+    else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
   } // tool size down
   else if (validKeybind.action === "Tool Size Up") {
     const tool = toolStore.activeTool;
-    if (tool === "brush") {
-      toolStore.brushSize = Math.min(toolStore.brushSize + 1, config.public.maxBrushSize);
-      useUpdateBrush();
-    } else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
+    if (tool === "brush")
+      toolStore.brushSize = Math.min(toolStore.brushSize + 1, config.public.maxBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
+    else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
   } // tool size up
   else return;
 

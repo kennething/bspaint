@@ -2,7 +2,7 @@ import { Circle, FabricImage, IText, Point, Rect, type TPointerEvent, type TPoin
 
 export function useSetupScroll() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, lastMousePosEvent } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   const toolStore = useToolStore();
@@ -42,21 +42,31 @@ export function useSetupScroll() {
     currentTransform[5] -= event.e.deltaY;
     canvas.value.zoomToPoint(new Point(event.e.offsetX, event.e.offsetY), canvas.value.getZoom());
 
-    handleMousePosTracking(event);
-    handleBrushPreview(event);
+    lastMousePosEvent.value = event;
+    useMousePosTracking(event);
+    useBrushPreview(event);
+    useTextPreview(event);
   }
 }
-function handleMousePosTracking(event: TPointerEventInfo<TPointerEvent | WheelEvent>) {
+
+/** @param event uses the last mouse position event if not provided */
+export function useMousePosTracking(event?: TPointerEventInfo<TPointerEvent | WheelEvent>) {
   const canvasStore = useCanvasStore();
+
+  if (!event) event = canvasStore.lastMousePosEvent;
+  if (!event) return console.warn("handleMousePosTracking no event");
 
   canvasStore.mousePos.x = event.scenePoint.x;
   canvasStore.mousePos.y = event.scenePoint.y;
 }
-function handleBrushPreview(event: TPointerEventInfo<TPointerEvent | WheelEvent>) {
+/** @param event uses the last mouse position event if not provided */
+export function useBrushPreview(event?: TPointerEventInfo<TPointerEvent | WheelEvent>) {
   const canvasStore = useCanvasStore();
   const toolStore = useToolStore();
 
   if (!canvasStore.fabricCanvas) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
+  if (!event) event = canvasStore.lastMousePosEvent;
+  if (!event) return console.warn("handleMousePosTracking no event");
 
   if (toolStore.activeTool === "brush") {
     const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "brushPreview");
@@ -72,11 +82,41 @@ function handleBrushPreview(event: TPointerEventInfo<TPointerEvent | WheelEvent>
       evented: false,
       excludeFromExport: true,
       name: "brushPreview",
-      opacity: (canvasStore.layers.find((layer) => layer.id === canvasStore.activeLayerId)?.opacity ?? 100) / 100
+      opacity: canvasStore.activeLayer.opacity / 100
     });
     canvasStore.fabricCanvas.add(brushPreview);
     canvasStore.fabricCanvas.requestRenderAll();
   } // brush
+}
+/** @param event uses the last mouse position event if not provided */
+export function useTextPreview(event?: TPointerEventInfo<TPointerEvent | WheelEvent>) {
+  const canvasStore = useCanvasStore();
+  const toolStore = useToolStore();
+
+  if (!canvasStore.fabricCanvas) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
+  if (!event) event = canvasStore.lastMousePosEvent;
+  if (!event) return console.warn("handleMousePosTracking no event");
+
+  if (toolStore.activeTool === "text") {
+    const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "textPreview");
+    if (existing) canvasStore.fabricCanvas.remove(existing);
+
+    const textPreview = new Rect({
+      left: event.scenePoint.x,
+      top: event.scenePoint.y,
+      width: toolStore.fontSize * 0.3,
+      height: toolStore.fontSize,
+      fill: toolStore.primaryColor,
+      stroke: toolStore.primaryColor,
+      selectable: false,
+      evented: false,
+      excludeFromExport: true,
+      name: "textPreview",
+      opacity: canvasStore.activeLayer.opacity / 100
+    });
+    canvasStore.fabricCanvas.add(textPreview);
+    canvasStore.fabricCanvas.requestRenderAll();
+  } // text
 }
 
 export function useSetupMouseDown() {
@@ -118,7 +158,7 @@ export function useSetupMouseDown() {
     if (activeLayer.value?.isLocked) return;
 
     if (activeTool.value === "text" && !event.target && isLeftClick) {
-      const text = new IText("Bottom text", {
+      const text = new IText("", {
         left: event.scenePoint.x,
         top: event.scenePoint.y,
         fontFamily: fontFamily.value,
@@ -142,12 +182,14 @@ export function useSetupMouseDown() {
 
 export function useSetupMouseMove() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, lastMousePosEvent } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   canvas.value.on("mouse:move", (event) => {
-    handleMousePosTracking(event);
-    handleBrushPreview(event);
+    lastMousePosEvent.value = event;
+    useMousePosTracking(event);
+    useBrushPreview(event);
+    useTextPreview(event);
   });
 }
 

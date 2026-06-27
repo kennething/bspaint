@@ -1,6 +1,6 @@
 <template>
   <Transition>
-    <div v-show="showTransition" class="solid-ass">
+    <div v-show="showTransition" class="solid-ass" @click.right.prevent>
       <slot></slot>
     </div>
   </Transition>
@@ -9,7 +9,7 @@
 <script setup lang="ts">
 const props = defineProps<{ doTransition?: boolean }>();
 const showTransition = ref(!props.doTransition);
-// TODO: add tooltips
+
 onMounted(() => (showTransition.value = true));
 </script>
 

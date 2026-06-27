@@ -9,7 +9,7 @@
         </GuiButtonGroup>
       </div>
 
-      <div class="hide-scrollbar h-100 w-100 overflow-y-scroll">
+      <div class="hide-scrollbar items-between flex h-100 w-100 flex-col justify-start gap-4 overflow-y-scroll">
         <RightHudHelpKeybindSection :is-mac="tempIsMac" :keybinds="otherKeybinds" title="" />
         <RightHudHelpKeybindSection :is-mac="tempIsMac" :keybinds="toolKeybinds" title="Tools" />
         <RightHudHelpKeybindSection :is-mac="tempIsMac" :keybinds="canvasKeybinds" title="Canvas" />
@@ -19,8 +19,8 @@
       <div class="mt-4 flex w-full items-center justify-end gap-2">
         <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
         <GuiButtonSingle
-          class="border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!"
-          inner-class-override="hover:bg-blue-200/50!"
+          :class="{ 'border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!': isMac !== tempIsMac }"
+          :inner-class-override="isMac !== tempIsMac ? 'hover:bg-blue-200/50!' : ''"
           image="/icons/check.svg"
           label="Confirm"
           :is-disabled="isMac === tempIsMac"
