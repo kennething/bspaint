@@ -1,3 +1,5 @@
+import { FabricObject } from "fabric";
+
 export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: fill, rectangle? circle? -shapes
 
 export const useToolStore = defineStore("toolStore", () => {
@@ -5,6 +7,16 @@ export const useToolStore = defineStore("toolStore", () => {
   watch(activeTool, (_, oldTool) => (previousTool.value = oldTool));
   const previousTool = ref<Tool>("select");
   const zoomLevel = ref(1);
+
+  const selectedObject = ref<FabricObject>();
+  const stopWatchers = ref<Function[]>([]);
+  const selectedObjectChangedEvent = ref(false);
+  watch(selectedObjectChangedEvent, async (val) => {
+    if (val) {
+      await nextTick();
+      selectedObjectChangedEvent.value = false;
+    }
+  });
 
   const backgroundColor = ref("#FFFFFFFF");
   const primaryColor = ref("#000000");
@@ -26,9 +38,9 @@ export const useToolStore = defineStore("toolStore", () => {
   watch(secondaryColor, (newColor) => setColor("secondary", newColor));
 
   /** sets the color and also updates the recent colors list */
-  function setColor(type: "primary" | "secondary", color: string) {
+  function setColor(type: "primary" | "secondary" | "other", color: string) {
     if (type === "primary") primaryColor.value = color;
-    else secondaryColor.value = color;
+    else if (type === "secondary") secondaryColor.value = color;
 
     if (!recentColors.value.includes(color)) {
       recentColors.value.unshift(color);
@@ -38,5 +50,20 @@ export const useToolStore = defineStore("toolStore", () => {
     useUpdateBrush();
   }
 
-  return { activeTool, previousTool, backgroundColor, primaryColor, secondaryColor, recentColors, brushSize, fontSize, fontFamily, zoomLevel, setColor };
+  return {
+    activeTool,
+    previousTool,
+    backgroundColor,
+    primaryColor,
+    secondaryColor,
+    recentColors,
+    brushSize,
+    fontSize,
+    fontFamily,
+    zoomLevel,
+    setColor,
+    selectedObject,
+    stopWatchers,
+    selectedObjectChangedEvent
+  };
 });

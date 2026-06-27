@@ -5,15 +5,11 @@
         <LeftMenuTools />
         <LeftMenuHistory />
       </div>
-      <LeftMenuModifiers v-if="['brush', 'text'].includes(activeTool)" />
-      <LeftMenuColors />
+      <LeftMenuModifiers />
     </div>
   </Teleport>
 </template>
 
-<script setup lang="ts">
-const toolStore = useToolStore();
-const { activeTool } = storeToRefs(toolStore);
-</script>
+<script setup lang="ts"></script>
 
 <style scoped></style>

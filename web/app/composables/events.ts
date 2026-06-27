@@ -54,7 +54,7 @@ export function useMousePosTracking(event?: TPointerEventInfo<TPointerEvent | Wh
   const canvasStore = useCanvasStore();
 
   if (!event) event = canvasStore.lastMousePosEvent;
-  if (!event) return console.warn("handleMousePosTracking no event");
+  if (!event) return console.warn("useMousePosTracking no event");
 
   canvasStore.mousePos.x = event.scenePoint.x;
   canvasStore.mousePos.y = event.scenePoint.y;
@@ -66,7 +66,7 @@ export function useBrushPreview(event?: TPointerEventInfo<TPointerEvent | WheelE
 
   if (!canvasStore.fabricCanvas) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
   if (!event) event = canvasStore.lastMousePosEvent;
-  if (!event) return console.warn("handleMousePosTracking no event");
+  if (!event) return console.warn("useBrushPreview no event"); // is called without event by useUpdateBrush by onMounted in Canvas
 
   if (toolStore.activeTool === "brush") {
     const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "brushPreview");
@@ -95,16 +95,17 @@ export function useTextPreview(event?: TPointerEventInfo<TPointerEvent | WheelEv
 
   if (!canvasStore.fabricCanvas) return console.warn("setupMouseMove handleBrushPreview no fabricCanvas");
   if (!event) event = canvasStore.lastMousePosEvent;
-  if (!event) return console.warn("handleMousePosTracking no event");
+  if (!event) return console.warn("useTextPreview no event");
 
   if (toolStore.activeTool === "text") {
     const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "textPreview");
     if (existing) canvasStore.fabricCanvas.remove(existing);
 
+    // TODO: make it blink maybe
     const textPreview = new Rect({
       left: event.scenePoint.x,
       top: event.scenePoint.y,
-      width: toolStore.fontSize * 0.3,
+      width: toolStore.fontSize * 0.15,
       height: toolStore.fontSize,
       fill: toolStore.primaryColor,
       stroke: toolStore.primaryColor,
@@ -129,6 +130,7 @@ export function useSetupMouseDown() {
 
   const userStore = useUserStore();
 
+  // TODO: add middle click scrolling
   canvas.value.on("mouse:down", (event) => {
     if (!canvas.value) return console.warn("setupMouseDown no fabricCanvas");
 
@@ -183,13 +185,35 @@ export function useSetupMouseDown() {
 export function useSetupMouseMove() {
   const canvasStore = useCanvasStore();
   const { fabricCanvas: canvas, lastMousePosEvent } = storeToRefs(canvasStore);
-  if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
+  if (!canvas.value) return console.warn("setupMouseMove no fabricCanvas");
 
   canvas.value.on("mouse:move", (event) => {
     lastMousePosEvent.value = event;
     useMousePosTracking(event);
     useBrushPreview(event);
     useTextPreview(event);
+  });
+}
+
+export function useSetupSelection() {
+  const canvasStore = useCanvasStore();
+  const { fabricCanvas: canvas } = storeToRefs(canvasStore);
+  if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
+
+  const toolStore = useToolStore();
+  const { selectedObject, stopWatchers } = storeToRefs(toolStore);
+
+  canvas.value.on("selection:created", (event) => {
+    if (event.selected.length === 1) selectedObject.value = event.selected[0];
+  });
+  canvas.value.on("selection:updated", (event) => {
+    if (event.selected.length === 1) selectedObject.value = event.selected[0];
+  });
+  // canvas.value.on("selection:updated", (event) => selectedObjects.value.push(...event.selected.filter((obj) => !selectedObjects.value.includes(obj))));
+  canvas.value.on("selection:cleared", () => {
+    stopWatchers.value.forEach((stopWatcher) => stopWatcher());
+    stopWatchers.value = [];
+    selectedObject.value = undefined;
   });
 }
 

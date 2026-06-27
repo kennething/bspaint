@@ -33,6 +33,7 @@ export function useSetTool(tool: Tool) {
     obj.evented = false;
     if (obj.name === "brushPreview" || obj.name === "textPreview") canvas.value?.remove(obj);
   });
+  canvas.value.requestRenderAll();
 
   if (activeLayer.value.isLocked) return canvas.value.setCursor("not-allowed");
 

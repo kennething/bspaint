@@ -96,10 +96,12 @@ const showManualInput = ref(false);
 const manualInput = useTemplateRef("manual-input");
 
 let unroundedValue: number | null = null;
+let roundedValue: number | null = null;
 async function inputOn() {
   userStore.stopKeybinds();
   unroundedValue = model.value!;
-  model.value = Math.round(model.value!);
+  model.value = model.value && model.value >= 1 ? Math.round(model.value!) : Number(model.value!.toFixed(2));
+  roundedValue = model.value;
 
   showManualInput.value = true;
 
@@ -112,8 +114,9 @@ function inputOff() {
   userStore.restartKeybinds();
   showManualInput.value = false;
 
-  if (model.value === Math.round(unroundedValue!)) {
+  if (model.value === roundedValue) {
     model.value = unroundedValue!;
+    roundedValue = null;
     return (unroundedValue = null);
   }
 

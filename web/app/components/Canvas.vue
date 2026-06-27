@@ -56,6 +56,7 @@ onMounted(() => {
   useSetupScroll();
   useSetupMouseDown();
   useSetupMouseMove();
+  useSetupSelection();
 
   canvasStore.fabricCanvas.on("object:added", (event) => {
     event.target.set({ uuid: v7() });

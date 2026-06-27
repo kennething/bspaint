@@ -31,87 +31,13 @@
             <div class="h-full w-full" :style="{ backgroundColor: color.hex }"></div>
           </div>
 
-          <div class="flex items-center justify-center gap-2">
-            <label for="hex" class="text-xs font-light">Hex</label>
-            <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-              <input
-                id="hex"
-                type="text"
-                class="w-32 text-center focus:outline-none"
-                v-model="color.hex"
-                @change="updateFromHex"
-                @focus="userStore.stopKeybinds"
-                @blur="userStore.restartKeybinds"
-                maxlength="6"
-              />
-            </GuiMenu>
-          </div>
+          <GuiInput name="Hex" v-model="color.hex" @on-change="updateFromHex" inner-class="w-32" model-type="string" :maxlength="editingColor === 'background' ? 9 : 7" />
 
           <div class="flex flex-col items-end justify-center gap-1">
-            <div class="flex items-center justify-center gap-2">
-              <label for="red" class="text-xs font-light">Red</label>
-              <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input
-                  id="red"
-                  type="number"
-                  class="w-20 text-center focus:outline-none"
-                  v-model.number="color.r"
-                  @change="updateFromRgb"
-                  @focus="userStore.stopKeybinds"
-                  @blur="userStore.restartKeybinds"
-                  min="0"
-                  max="255"
-                />
-              </GuiMenu>
-            </div>
-            <div class="flex items-center justify-center gap-2">
-              <label for="green" class="text-xs font-light">Green</label>
-              <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input
-                  id="green"
-                  type="number"
-                  class="w-20 text-center focus:outline-none"
-                  v-model.number="color.g"
-                  @change="updateFromRgb"
-                  @focus="userStore.stopKeybinds"
-                  @blur="userStore.restartKeybinds"
-                  min="0"
-                  max="255"
-                />
-              </GuiMenu>
-            </div>
-            <div class="flex items-center justify-center gap-2">
-              <label for="blue" class="text-xs font-light">Blue</label>
-              <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input
-                  id="blue"
-                  type="number"
-                  class="w-20 text-center focus:outline-none"
-                  v-model.number="color.b"
-                  @change="updateFromRgb"
-                  @focus="userStore.stopKeybinds"
-                  @blur="userStore.restartKeybinds"
-                  min="0"
-                  max="255"
-                />
-              </GuiMenu>
-            </div>
-            <div v-if="editingColor === 'background'" class="flex items-center justify-center gap-2">
-              <label for="alpha" class="text-xs font-light">Alpha</label>
-              <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-                <input
-                  id="alpha"
-                  type="number"
-                  class="w-20 text-center focus:outline-none"
-                  v-model.number="color.a"
-                  @change="updateFromRgb"
-                  @focus="userStore.stopKeybinds"
-                  @blur="userStore.restartKeybinds"
-                  min="0"
-                  max="100"
-                />
-              </GuiMenu>
-            </div>
+            <GuiInput name="Red" v-model="color.r" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
+            <GuiInput name="Green" v-model="color.g" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
+            <GuiInput name="Blue" v-model="color.b" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
+            <GuiInput v-if="editingColor === 'background'" name="Alpha" v-model="color.a" @on-change="updateFromRgb" model-type="number" :min="0" :max="100" />
           </div>
         </div>
 
@@ -131,13 +57,13 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ editingColor: "primary" | "secondary" | "background" }>();
+const props = defineProps<{ editingColor: "primary" | "secondary" | "background" | "other" }>();
 const emit = defineEmits<{ close: [void] }>();
 
 const toolStore = useToolStore();
 const { primaryColor, secondaryColor, backgroundColor } = storeToRefs(toolStore);
 
-const userStore = useUserStore();
+const singleColorModel = defineModel<string>();
 
 const colorSquare = useTemplateRef("square");
 let isDragging = false;
@@ -162,6 +88,11 @@ watch(secondaryColor, (newColor) => {
   color.hex = newColor;
   updateFromHex();
 });
+watch(singleColorModel, (newColor) => {
+  if (props.editingColor !== "other") return;
+  color.hex = newColor!;
+  updateFromHex();
+});
 
 onBeforeMount(() => {
   if (props.editingColor === "background") {
@@ -172,10 +103,18 @@ onBeforeMount(() => {
 });
 
 function save() {
+  const colorHex = color.hex.slice(0, 7);
+
   if (props.editingColor === "background") {
     backgroundColor.value = color.hex;
     useHandleResize();
-  } else toolStore.setColor(props.editingColor, color.hex.slice(0, 7));
+  } // background
+  else if (props.editingColor === "other") {
+    singleColorModel.value = colorHex;
+    toolStore.setColor("other", colorHex);
+  } // other
+  else toolStore.setColor(props.editingColor, colorHex);
+
   emit("close");
 }
 
@@ -195,7 +134,7 @@ function updateFromRgb() {
   color.b = Math.max(0, Math.min(255, color.b));
 
   color.hex = rgbToHex(color.r, color.g, color.b);
-  color.hex += percentToHex(color.a);
+  if (props.editingColor === "background") color.hex += percentToHex(color.a);
 
   const [newH, newS, newV] = rgbToHsv(color.r, color.g, color.b);
   color.h = newH;

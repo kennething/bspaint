@@ -11,11 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ActiveSelection } from "fabric";
-
-definePageMeta({
-  middleware: "os"
-});
+import { ActiveSelection, IText, Path } from "fabric";
 
 const userStore = useUserStore();
 const { isMac, disableKeybinds } = storeToRefs(userStore);
@@ -36,7 +32,6 @@ function handleKeyDown(event: KeyboardEvent) {
 
   if (!canvas.value) return console.warn("handleKeyDown no canvas");
   const eventKey = event.key.toLowerCase();
-  console.log(eventKey);
 
   function validateModiferKeys(modifierKeys: ModifierKey[]): boolean {
     return modifierKeys.every((key) => {
@@ -90,8 +85,8 @@ function handleKeyDown(event: KeyboardEvent) {
   else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Swap Tools") {
     // * previous -> active swap is in the watcher in toolStore
+    useSetTool(toolStore.previousTool);
     toolStore.activeTool = toolStore.previousTool;
-    useSetTool(toolStore.activeTool);
   } // swap tools
   else if (validKeybind.action === "Select All") {
     useSetTool("select");
@@ -115,12 +110,34 @@ function handleKeyDown(event: KeyboardEvent) {
     if (tool === "brush")
       toolStore.brushSize = Math.max(toolStore.brushSize - 1, config.public.minBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
     else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
+    else if (tool === "select") {
+      if (toolStore.selectedObject instanceof Path) {
+        toolStore.selectedObjectChangedEvent = true;
+        toolStore.selectedObject.strokeWidth = Math.max(toolStore.selectedObject.strokeWidth - 1, config.public.minBrushSize);
+        canvas.value.requestRenderAll();
+      } else if (toolStore.selectedObject instanceof IText) {
+        toolStore.selectedObjectChangedEvent = true;
+        toolStore.selectedObject.fontSize = Math.max(toolStore.selectedObject.fontSize - 1, config.public.minFontSize);
+        canvas.value.requestRenderAll();
+      }
+    }
   } // tool size down
   else if (validKeybind.action === "Tool Size Up") {
     const tool = toolStore.activeTool;
     if (tool === "brush")
       toolStore.brushSize = Math.min(toolStore.brushSize + 1, config.public.maxBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
     else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
+    else if (tool === "select") {
+      if (toolStore.selectedObject instanceof Path) {
+        toolStore.selectedObjectChangedEvent = true;
+        toolStore.selectedObject.strokeWidth = Math.min(toolStore.selectedObject.strokeWidth + 1, config.public.maxBrushSize);
+        canvas.value.requestRenderAll();
+      } else if (toolStore.selectedObject instanceof IText) {
+        toolStore.selectedObjectChangedEvent = true;
+        toolStore.selectedObject.fontSize = Math.min(toolStore.selectedObject.fontSize + 1, config.public.maxFontSize);
+        canvas.value.requestRenderAll();
+      }
+    }
   } // tool size up
   else return;
 

@@ -1,38 +1,8 @@
 <template>
   <Teleport to="body">
     <GuiMenu do-transition class="fixed top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-4 p-10 shadow-lg! shadow-neutral-400/50!" @click.stop>
-      <div class="flex items-center justify-center gap-2">
-        <label for="width" class="text-xs font-light">Width</label>
-        <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-          <input
-            id="width"
-            type="number"
-            class="w-20 text-center focus:outline-none"
-            v-model.number="newSize.width"
-            :min="config.public.minCanvasSize"
-            :max="config.public.maxCanvasSize"
-            @change="validateDimensions"
-            @focus="userStore.stopKeybinds"
-            @blur="userStore.restartKeybinds"
-          />
-        </GuiMenu>
-      </div>
-      <div class="flex items-center justify-center gap-2">
-        <label for="height" class="text-xs font-light">Height</label>
-        <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-          <input
-            id="height"
-            type="number"
-            class="w-20 text-center focus:outline-none"
-            v-model.number="newSize.height"
-            :min="config.public.minCanvasSize"
-            :max="config.public.maxCanvasSize"
-            @change="validateDimensions"
-            @focus="userStore.stopKeybinds"
-            @blur="userStore.restartKeybinds"
-          />
-        </GuiMenu>
-      </div>
+      <GuiInput name="Width" v-model="newSize.width" model-type="number" @on-change="validateDimensions" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
+      <GuiInput name="Height" v-model="newSize.height" model-type="number" @on-change="validateDimensions" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
 
       <div class="mt-4 flex w-full items-center justify-around">
         <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
@@ -51,8 +21,6 @@ const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas, canvasSize } = storeToRefs(canvasStore);
 const config = useRuntimeConfig();
 
-const userStore = useUserStore();
-
 const newSize = reactive({
   width: canvasSize.value.width,
   height: canvasSize.value.height
@@ -60,7 +28,7 @@ const newSize = reactive({
 
 function validateDimensions() {
   if (newSize.width < config.public.minCanvasSize) newSize.width = config.public.minCanvasSize;
-  if (newSize.height < config.public.minCanvasSize) newSize.height = config.public.maxCanvasSize;
+  if (newSize.height < config.public.minCanvasSize) newSize.height = config.public.minCanvasSize;
   if (newSize.width > config.public.maxCanvasSize) newSize.width = config.public.maxCanvasSize;
   if (newSize.height > config.public.maxCanvasSize) newSize.height = config.public.maxCanvasSize;
 }

@@ -4,8 +4,8 @@
       <div class="flex items-center justify-center gap-2">
         <p class="text-lg font-bold text-neutral-800">Wrong platform detected?</p>
         <GuiButtonGroup>
-          <GuiInnerButton image="/icons/windows.svg" label="Switch to Windows" tooltip-direction="top" :is-disabled="!tempIsMac" @clicked="tempIsMac = false" />
-          <GuiInnerButton image="/icons/apple.svg" label="Switch to MacOS" tooltip-direction="top" :is-disabled="tempIsMac" @clicked="tempIsMac = true" />
+          <GuiInnerButton image="/icons/windows.svg" label="Switch to Windows" :tooltip-direction="tempIsMac ? 'top' : undefined" :is-disabled="!tempIsMac" @clicked="tempIsMac = false" />
+          <GuiInnerButton image="/icons/apple.svg" label="Switch to MacOS" :tooltip-direction="tempIsMac ? undefined : 'top'" :is-disabled="tempIsMac" @clicked="tempIsMac = true" />
         </GuiButtonGroup>
       </div>
 
