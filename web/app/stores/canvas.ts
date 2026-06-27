@@ -161,6 +161,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
   function deleteLayer(layer: Layer) {
     if (!fabricCanvas.value) return console.warn("deleteLayer no fabricCanvas");
 
+    const layerIndex = layers.value.findIndex((l) => l.id === layer.id);
     layers.value = layers.value.filter((l) => l.id !== layer.id);
     const objectsToRemove = fabricCanvas.value.getObjects().filter((obj) => obj.layerId === layer.id);
     objectsToRemove.forEach((obj) => fabricCanvas.value?.remove(obj));
@@ -168,14 +169,14 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     if (layers.value.length <= 0)
       layers.value = [
         {
-          id: 1,
-          name: "Layer 1",
+          id: layerIdCounter.value,
+          name: `Layer ${layerIdCounter.value++}`,
           isLocked: false,
           opacity: 100,
           dataUrl: ""
         }
       ];
-    if (activeLayerId.value === layer.id) activeLayerId.value = layers.value[0]!.id;
+    if (activeLayerId.value === layer.id) activeLayerId.value = (layers.value[layerIndex] ?? layers.value[layers.value.length - 1]!).id;
 
     saveHistory();
   }

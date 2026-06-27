@@ -13,6 +13,10 @@
 <script setup lang="ts">
 import { ActiveSelection } from "fabric";
 
+definePageMeta({
+  middleware: "os"
+});
+
 const userStore = useUserStore();
 const { isMac, disableKeybinds } = storeToRefs(userStore);
 
@@ -65,24 +69,25 @@ function handleKeyDown(event: KeyboardEvent) {
   else if (validKeybind.action === "Export Canvas") canvasStore.isExportingOpen = true;
   else if (validKeybind.action === "Resize Canvas") canvasStore.isResizingOpen = true;
   else if (validKeybind.action === "Help") canvasStore.isHelpOpen = true;
-  else if (validKeybind.action === "Layer Up") canvasStore.activeLayerId = Math.min(canvasStore.activeLayerId + 1, canvasStore.layers.length);
-  else if (validKeybind.action === "Layer Down") canvasStore.activeLayerId = Math.max(canvasStore.activeLayerId - 1, 1);
+  else if (validKeybind.action === "Layer Up")
+    activeLayerId.value = canvasStore.layers[canvasStore.layers.findIndex((l) => l.id === activeLayerId.value) + 1]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Layer Down") activeLayerId.value = canvasStore.layers[canvasStore.layers.findIndex((l) => l.id === activeLayerId.value) - 1]?.id ?? canvasStore.layers[0]!.id;
   else if (validKeybind.action === "Layer Opacity Down") activeLayer.value.opacity = Math.max(activeLayer.value.opacity - 10, 0);
   else if (validKeybind.action === "Layer Opacity Up") activeLayer.value.opacity = Math.min(activeLayer.value.opacity + 10, 100);
   else if (validKeybind.action === "Reset Zoom") useResetZoom();
   else if (validKeybind.action === "Zoom In") zoomLevel.value = Math.min(zoomLevel.value + 0.1, config.public.maxZoom);
   else if (validKeybind.action === "Zoom Out") zoomLevel.value = Math.max(zoomLevel.value - 0.1, config.public.minZoom);
   else if (validKeybind.action === "New Layer") canvasStore.triggerNewLayer = true;
-  else if (validKeybind.action === "Select Layer 1") activeLayerId.value = 1;
-  else if (validKeybind.action === "Select Layer 2") activeLayerId.value = Math.min(2, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 3") activeLayerId.value = Math.min(3, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 4") activeLayerId.value = Math.min(4, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 5") activeLayerId.value = Math.min(5, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 6") activeLayerId.value = Math.min(6, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 7") activeLayerId.value = Math.min(7, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 8") activeLayerId.value = Math.min(8, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Layer 9") activeLayerId.value = Math.min(9, canvasStore.layers.length);
-  else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers.length;
+  else if (validKeybind.action === "Select Layer 1") activeLayerId.value = canvasStore.layers[0]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 2") activeLayerId.value = canvasStore.layers[1]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 3") activeLayerId.value = canvasStore.layers[2]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 4") activeLayerId.value = canvasStore.layers[3]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 5") activeLayerId.value = canvasStore.layers[4]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 6") activeLayerId.value = canvasStore.layers[5]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 7") activeLayerId.value = canvasStore.layers[6]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 8") activeLayerId.value = canvasStore.layers[7]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Layer 9") activeLayerId.value = canvasStore.layers[8]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Swap Tools") {
     // * previous -> active swap is in the watcher in toolStore
     toolStore.activeTool = toolStore.previousTool;

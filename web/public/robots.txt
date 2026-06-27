@@ -1,0 +1,4 @@
+# single
+
+user-agent: *
+disallow: /draw

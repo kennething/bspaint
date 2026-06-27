@@ -7,13 +7,15 @@ export function useSetupScroll() {
 
   const toolStore = useToolStore();
   const { zoomLevel } = storeToRefs(toolStore);
+  const userStore = useUserStore();
+  const { isMac } = storeToRefs(userStore);
   const config = useRuntimeConfig();
 
   canvas.value.on("mouse:wheel", (event) => {
     event.e.preventDefault();
     event.e.stopPropagation();
 
-    if (event.e.ctrlKey || event.e.metaKey) return handleZoom(event);
+    if ((!isMac.value && event.e.ctrlKey) || (isMac.value && event.e.metaKey)) return handleZoom(event);
     handleScroll(event);
   });
 
