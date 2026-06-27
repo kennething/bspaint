@@ -1,4 +1,4 @@
-import { type Canvas, type TPointerEvent, type TPointerEventInfo } from "fabric";
+import { FabricObject, type Canvas, type TPointerEvent, type TPointerEventInfo } from "fabric";
 
 export type Layer = {
   id: number;
@@ -23,6 +23,8 @@ export type HistoryEntry = {
 
 export const useCanvasStore = defineStore("canvasStore", () => {
   const fabricCanvas = markRaw(shallowRef<Canvas>());
+  const fabricClipboard = ref<FabricObject>();
+  const lastCopiedContent = markRaw(shallowRef<File>());
 
   const lastMousePosEvent = markRaw(shallowRef<TPointerEventInfo<TPointerEvent | WheelEvent>>());
   const mousePos = reactive({ x: 0, y: 0 });
@@ -224,6 +226,8 @@ export const useCanvasStore = defineStore("canvasStore", () => {
 
   return {
     fabricCanvas,
+    fabricClipboard,
+    lastCopiedContent,
     lastMousePosEvent,
     mousePos,
     canvasSize,

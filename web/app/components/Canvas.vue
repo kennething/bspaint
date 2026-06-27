@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { Canvas, InteractiveFabricObject } from "fabric";
 import { v7 } from "uuid";
-// TODO: copy and paste fabric objects
+
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();

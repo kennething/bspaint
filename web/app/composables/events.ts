@@ -1,4 +1,4 @@
-import { Circle, FabricImage, IText, Point, Rect, type TPointerEvent, type TPointerEventInfo } from "fabric";
+import { ActiveSelection, Circle, FabricImage, IText, Point, Rect, type TPointerEvent, type TPointerEventInfo } from "fabric";
 
 export function useSetupScroll() {
   const canvasStore = useCanvasStore();
@@ -234,20 +234,19 @@ export function useResetZoom() {
 
 export function useHandlePaste(event: ClipboardEvent) {
   const items = event.clipboardData?.items;
-  if (!items) return console.warn("handlePaste no clipboard items");
+  if (!items || !items.length || Array.from(items).every((item) => item.kind !== "file")) return pasteFromFabricClipboard();
 
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, fabricClipboard, lastCopiedContent, activeLayerId } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("handlePaste no fabricCanvas");
 
   for (const item of items) {
     if (item.kind !== "file") continue;
 
     const blob = item.getAsFile();
-    if (!blob) {
-      console.warn("handlePaste item is file but getAsFile returned null");
-      continue;
-    }
+    if (!blob || (lastCopiedContent.value?.name === blob.name && lastCopiedContent.value?.size === blob.size && lastCopiedContent.value?.type === blob.type)) return pasteFromFabricClipboard();
+
+    lastCopiedContent.value = blob;
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -256,6 +255,7 @@ export function useHandlePaste(event: ClipboardEvent) {
       if (!canvas.value) return console.warn("handlePaste reader onload no fabricCanvas");
 
       const img = await FabricImage.fromURL(event.target.result);
+      fabricClipboard.value = img;
       img.set({ layerId: activeLayerId.value });
       canvas.value.add(img);
       canvas.value.setActiveObject(img);
@@ -263,6 +263,31 @@ export function useHandlePaste(event: ClipboardEvent) {
     };
     reader.readAsDataURL(blob);
   }
+}
+
+async function pasteFromFabricClipboard() {
+  const canvasStore = useCanvasStore();
+  const { fabricCanvas: canvas, fabricClipboard, activeLayerId } = storeToRefs(canvasStore);
+  if (!canvas.value) return console.warn("handlePaste no fabricCanvas");
+  if (!fabricClipboard.value) return console.warn("handlePaste no fabricClipboard to paste");
+
+  const clonedObj = await fabricClipboard.value.clone();
+  if (!clonedObj) return console.warn("handlePaste no fabricClipboard to clone");
+  clonedObj.set({ layerId: activeLayerId.value, left: clonedObj.left + 10, top: clonedObj.top + 10 });
+
+  if (clonedObj instanceof ActiveSelection) {
+    clonedObj.canvas = canvas.value;
+    clonedObj.forEachObject((obj) => {
+      obj.set({ layerId: activeLayerId.value });
+      canvas.value?.add(obj);
+    });
+    clonedObj.setCoords();
+  } else canvas.value.add(clonedObj);
+
+  fabricClipboard.value.top += 10;
+  fabricClipboard.value.left += 10;
+  useSetTool("select");
+  canvas.value.setActiveObject(clonedObj);
 }
 
 export function useHandleResize() {

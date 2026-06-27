@@ -129,6 +129,9 @@ export const keybinds = [
   { keys: [["control"], "0"], macKeys: [["meta"], "0"], action: "Reset Zoom", category: "canvas" },
   { keys: [["control"], "-"], macKeys: [["meta"], "-"], action: "Zoom Out", category: "canvas" }, // hardcoded tooltip
   { keys: [["control"], "="], macKeys: [["meta"], "="], action: "Zoom In", category: "canvas" }, // hardcoded tooltip
+  { keys: [["control"], "c"], macKeys: [["meta"], "c"], action: "Copy", category: "canvas" },
+  { keys: [["control"], "v"], macKeys: [["meta"], "v"], action: "Paste", category: "canvas" },
+  { keys: [["control"], "x"], macKeys: [["meta"], "x"], action: "Cut", category: "canvas" },
   { keys: [[], "arrowup"], action: "Tool Size Up", category: "tools" }, // hardcoded tooltip
   { keys: [[], "arrowdown"], action: "Tool Size Down", category: "tools" }, // hardcoded tooltip
   { keys: [[], "escape"], action: "Deselect All", category: "canvas" },

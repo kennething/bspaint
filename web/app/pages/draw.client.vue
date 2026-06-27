@@ -27,7 +27,7 @@ const config = useRuntimeConfig();
 onMounted(() => document.addEventListener("keydown", handleKeyDown));
 onUnmounted(() => document.removeEventListener("keydown", handleKeyDown));
 
-function handleKeyDown(event: KeyboardEvent) {
+async function handleKeyDown(event: KeyboardEvent) {
   if (disableKeybinds.value) return;
 
   if (!canvas.value) return console.warn("handleKeyDown no canvas");
@@ -139,6 +139,13 @@ function handleKeyDown(event: KeyboardEvent) {
       }
     }
   } // tool size up
+  else if (validKeybind.action === "Copy" || validKeybind.action === "Cut") {
+    const activeObject = canvas.value.getActiveObject();
+    if (!activeObject) return;
+
+    canvasStore.fabricClipboard = await activeObject.clone();
+    if (validKeybind.action === "Cut") canvas.value.remove(activeObject);
+  } // * copy/cut - paste is handled in paste event handler
   else return;
 
   event.preventDefault();
