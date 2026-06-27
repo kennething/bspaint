@@ -1,15 +1,22 @@
 <template>
   <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
     <GuiMenu class="w-full rounded-full! px-1 py-0.5 backdrop-blur-none!">
-      <button @click="addLayer" class="w-full rounded-full px-3 py-2 hover:bg-neutral-200/35">New Layer</button>
+      <button
+        @click="newLayer"
+        class="du-tooltip du-tooltip-bottom w-full rounded-full px-3 py-2 hover:bg-neutral-200/35"
+        :data-tip="`New Layer (${modifierKeySet.control} + ${isMac ? modifierKeySet.alt + ' + ' : ''}${specialKeys.enter})`"
+      >
+        New Layer
+      </button>
     </GuiMenu>
 
     <div v-auto-animate ref="layers-container" class="hide-scrollbar flex h-100 w-full flex-col-reverse items-center overflow-y-scroll">
       <div
-        v-for="layer in layers"
+        v-for="(layer, index) in layers"
         :key="layer.id"
-        class="flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2"
+        class="du-tooltip flex w-full items-center justify-center gap-3 rounded-xl px-3 py-2"
         :class="layer.id === activeLayerId ? 'bg-neutral-200/65 hover:bg-neutral-300/50' : 'hover:bg-neutral-200/35'"
+        :data-tip="`Layer ${layer.id} (${modifierKeySet.control} + ${isMac ? modifierKeySet.alt + ' + ' : ''}${index + 1})`"
         role="button"
         @click="canvasStore.switchLayer(layer)"
       >
@@ -39,17 +46,24 @@
 const layersContainer = useTemplateRef("layers-container");
 
 const canvasStore = useCanvasStore();
-const { layers, activeLayerId } = storeToRefs(canvasStore);
+const { layers, activeLayerId, triggerNewLayer } = storeToRefs(canvasStore);
+
 const toolStore = useToolStore();
 const { backgroundColor } = storeToRefs(toolStore);
 
+const userStore = useUserStore();
+const { isMac, modifierKeySet } = storeToRefs(userStore);
+
 const showColorPicker = ref(false);
 
-async function addLayer() {
+async function newLayer() {
   canvasStore.addLayer();
   await nextTick();
   layersContainer.value?.scrollTo({ behavior: "smooth", top: -layersContainer.value.scrollHeight });
 }
+watch(triggerNewLayer, (val) => {
+  if (val) newLayer();
+});
 </script>
 
 <style scoped></style>

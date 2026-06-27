@@ -79,11 +79,13 @@ function handleBrushPreview(event: TPointerEventInfo<TPointerEvent | WheelEvent>
 
 export function useSetupMouseDown() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, activeLayer, activeLayerId } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   const toolStore = useToolStore();
   const { activeTool, primaryColor, secondaryColor, fontFamily, fontSize } = storeToRefs(toolStore);
+
+  const userStore = useUserStore();
 
   canvas.value.on("mouse:down", (event) => {
     if (!canvas.value) return console.warn("setupMouseDown no fabricCanvas");
@@ -111,8 +113,7 @@ export function useSetupMouseDown() {
       useSetTool("brush");
     } // eyedropper
 
-    const activeLayer = layers.value.find((layer) => layer.id === activeLayerId.value);
-    if (activeLayer?.isLocked) return;
+    if (activeLayer.value?.isLocked) return;
 
     if (activeTool.value === "text" && !event.target && isLeftClick) {
       const text = new IText("Bottom text", {
@@ -126,8 +127,12 @@ export function useSetupMouseDown() {
 
       canvas.value.add(text);
       canvas.value.setActiveObject(text);
+
+      text.on("editing:entered", userStore.stopKeybinds);
+      text.on("editing:exited", userStore.restartKeybinds);
       text.enterEditing();
       text.selectAll();
+
       useSetTool("select");
     } // text
   });
@@ -242,7 +247,7 @@ export function useRedrawBoundingRect() {
       excludeFromExport: true,
       name: "boundingText",
       opacity: showBoundingRect.value ? 1 : 0,
-      fontFamily: "Happy Monkey",
+      fontFamily: "Comic Sans MS",
       textAlign: "center"
     }
   );

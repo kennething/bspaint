@@ -1,0 +1,128 @@
+<template>
+  <div class="flex flex-col items-center justify-center">
+    <LeftMenu />
+    <LeftHud />
+
+    <Canvas />
+
+    <RightMenu />
+    <RightHud />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ActiveSelection } from "fabric";
+
+const userStore = useUserStore();
+const { isMac, disableKeybinds } = storeToRefs(userStore);
+
+const canvasStore = useCanvasStore();
+const { fabricCanvas: canvas, activeLayerId, activeLayer } = storeToRefs(canvasStore);
+
+const toolStore = useToolStore();
+const { zoomLevel } = storeToRefs(toolStore);
+
+const config = useRuntimeConfig();
+
+onMounted(() => document.addEventListener("keydown", handleKeyDown));
+onUnmounted(() => document.removeEventListener("keydown", handleKeyDown));
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (disableKeybinds.value) return;
+
+  if (!canvas.value) return console.warn("handleKeyDown no canvas");
+  const eventKey = event.key.toLowerCase();
+  console.log(eventKey);
+
+  function validateModiferKeys(modifierKeys: ModifierKey[]): boolean {
+    return modifierKeys.every((key) => {
+      if (key === "alt") if (!event.altKey) return false;
+      if (key === "control") if (!event.ctrlKey) return false;
+      if (key === "shift") if (!event.shiftKey) return false;
+      if (key === "meta") if (!event.metaKey) return false;
+      return true;
+    });
+  }
+
+  const validKeybind = keybinds.find((k) => {
+    const matchRegularKeys = k.keys[1] === eventKey && validateModiferKeys(k.keys[0]);
+    if (!isMac.value || !("macKeys" in k)) return matchRegularKeys;
+
+    const matchMacKeys = k.macKeys[1] === eventKey && validateModiferKeys(k.macKeys[0]);
+    return matchMacKeys;
+  });
+  if (!validKeybind) return;
+
+  if (validKeybind.action === "Delete Selected") canvas.value.getActiveObjects().forEach((obj) => canvas.value?.remove(obj));
+  else if (validKeybind.action === "Undo") canvasStore.changeHistory("undo");
+  else if (validKeybind.action === "Redo") canvasStore.changeHistory("redo");
+  else if (validKeybind.action === "Brush") useSetTool("brush");
+  else if (validKeybind.action === "Text") useSetTool("text");
+  else if (validKeybind.action === "Eyedropper") useSetTool("eyedropper");
+  else if (validKeybind.action === "Select") useSetTool("select");
+  else if (validKeybind.action === "Delete Layer") canvasStore.deleteLayer(activeLayer.value);
+  else if (validKeybind.action === "Toggle Layer Lock") canvasStore.toggleLock(activeLayer.value, !activeLayer.value.isLocked);
+  else if (validKeybind.action === "Export Canvas") canvasStore.isExportingOpen = true;
+  else if (validKeybind.action === "Resize Canvas") canvasStore.isResizingOpen = true;
+  else if (validKeybind.action === "Help") canvasStore.isHelpOpen = true;
+  else if (validKeybind.action === "Layer Up") canvasStore.activeLayerId = Math.min(canvasStore.activeLayerId + 1, canvasStore.layers.length);
+  else if (validKeybind.action === "Layer Down") canvasStore.activeLayerId = Math.max(canvasStore.activeLayerId - 1, 1);
+  else if (validKeybind.action === "Layer Opacity Down") activeLayer.value.opacity = Math.max(activeLayer.value.opacity - 10, 0);
+  else if (validKeybind.action === "Layer Opacity Up") activeLayer.value.opacity = Math.min(activeLayer.value.opacity + 10, 100);
+  else if (validKeybind.action === "Reset Zoom") useResetZoom();
+  else if (validKeybind.action === "Zoom In") zoomLevel.value = Math.min(zoomLevel.value + 0.1, config.public.maxZoom);
+  else if (validKeybind.action === "Zoom Out") zoomLevel.value = Math.max(zoomLevel.value - 0.1, config.public.minZoom);
+  else if (validKeybind.action === "New Layer") canvasStore.triggerNewLayer = true;
+  else if (validKeybind.action === "Select Layer 1") activeLayerId.value = 1;
+  else if (validKeybind.action === "Select Layer 2") activeLayerId.value = Math.min(2, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 3") activeLayerId.value = Math.min(3, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 4") activeLayerId.value = Math.min(4, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 5") activeLayerId.value = Math.min(5, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 6") activeLayerId.value = Math.min(6, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 7") activeLayerId.value = Math.min(7, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 8") activeLayerId.value = Math.min(8, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Layer 9") activeLayerId.value = Math.min(9, canvasStore.layers.length);
+  else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers.length;
+  else if (validKeybind.action === "Swap Tools") {
+    // * previous -> active swap is in the watcher in toolStore
+    toolStore.activeTool = toolStore.previousTool;
+    useSetTool(toolStore.activeTool);
+  } // swap tools
+  else if (validKeybind.action === "Select All") {
+    useSetTool("select");
+    const selectableObjects = canvas.value.getObjects().filter((obj) => obj.selectable);
+    if (selectableObjects.length === 0) return;
+
+    canvas.value.discardActiveObject();
+    canvas.value.setActiveObject(new ActiveSelection(selectableObjects, { canvas: canvas.value }));
+    canvas.value.requestRenderAll();
+  } // select all
+  else if (validKeybind.action === "Deselect All") {
+    canvas.value.discardActiveObject();
+    canvas.value.requestRenderAll();
+  } // deselect all
+  else if (validKeybind.action === "Toggle Canvas Guide") {
+    canvasStore.showBoundingRect = !canvasStore.showBoundingRect;
+    useRedrawBoundingRect();
+  } // togle canvas guide
+  else if (validKeybind.action === "Tool Size Down") {
+    const tool = toolStore.activeTool;
+    if (tool === "brush") {
+      toolStore.brushSize = Math.max(toolStore.brushSize - 1, config.public.minBrushSize);
+      useUpdateBrush();
+    } else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
+  } // tool size down
+  else if (validKeybind.action === "Tool Size Up") {
+    const tool = toolStore.activeTool;
+    if (tool === "brush") {
+      toolStore.brushSize = Math.min(toolStore.brushSize + 1, config.public.maxBrushSize);
+      useUpdateBrush();
+    } else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
+  } // tool size up
+  else return;
+
+  event.preventDefault();
+}
+</script>
+
+<style scoped></style>

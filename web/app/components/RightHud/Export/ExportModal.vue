@@ -41,6 +41,8 @@
                 v-model="options.fileName"
                 maxlength="200"
                 placeholder="File Name"
+                @focus="userStore.stopKeybinds"
+                @blur="userStore.restartKeybinds"
               />
             </GuiMenu>
             <span class="shrink-0">.{{ options.format }}</span>
@@ -69,7 +71,9 @@ const emit = defineEmits<{
 }>();
 
 const canvasStore = useCanvasStore();
-const { fabricCanvas: canvas, canvasSize } = storeToRefs(canvasStore);
+const { fabricCanvas: canvas } = storeToRefs(canvasStore);
+
+const userStore = useUserStore();
 
 const canvasPreview = ref<string>();
 

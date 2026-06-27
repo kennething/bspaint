@@ -27,6 +27,10 @@ export const useCanvasStore = defineStore("canvasStore", () => {
   const canvasSize = reactive({ width: 0, height: 0 });
   const showBoundingRect = ref(true);
 
+  const isExportingOpen = ref(false);
+  const isResizingOpen = ref(false);
+  const isHelpOpen = ref(false);
+
   const layerIdCounter = ref(2);
   const activeLayerId = ref(1);
 
@@ -70,6 +74,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     layerIdCounter.value = historyEntry.layerIdCounter;
     activeLayerId.value = historyEntry.activeLayerId;
     useRedrawBoundingRect();
+    redrawLayerPreview("active");
     fabricCanvas.value.renderAll();
 
     isHistoryProcessing.value = false;
@@ -100,6 +105,14 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     },
     { deep: true }
   );
+  const activeLayer = computed(() => layers.value.find((layer) => layer.id === activeLayerId.value)!);
+  const triggerNewLayer = ref(false);
+  watch(triggerNewLayer, async (val) => {
+    if (val) {
+      await nextTick();
+      triggerNewLayer.value = false;
+    }
+  });
 
   function addLayer() {
     const toolStore = useToolStore();
@@ -177,7 +190,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
         if (!obj.excludeFromExport && obj.layerId !== activeLayerId.value) canvasClone.remove(obj);
         obj.opacity = 1;
       });
-      layers.value.find((layer) => layer.id === activeLayerId.value)!.dataUrl = canvasClone.toDataURL({
+      activeLayer.value.dataUrl = canvasClone.toDataURL({
         format: "webp",
         multiplier: 1,
         top: 0,
@@ -211,9 +224,14 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     mousePos,
     canvasSize,
     showBoundingRect,
+    isExportingOpen,
+    isResizingOpen,
+    isHelpOpen,
     layerIdCounter,
     activeLayerId,
     layers,
+    activeLayer,
+    triggerNewLayer,
     addLayer,
     switchLayer,
     toggleLock,

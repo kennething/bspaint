@@ -4,13 +4,31 @@
       <div class="flex items-center justify-center gap-2">
         <label for="width" class="text-xs font-light">Width</label>
         <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-          <input id="width" type="number" class="w-20 text-center focus:outline-none" v-model.number="newSize.width" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
+          <input
+            id="width"
+            type="number"
+            class="w-20 text-center focus:outline-none"
+            v-model.number="newSize.width"
+            :min="config.public.minCanvasSize"
+            :max="config.public.maxCanvasSize"
+            @focus="userStore.stopKeybinds"
+            @blur="userStore.restartKeybinds"
+          />
         </GuiMenu>
       </div>
       <div class="flex items-center justify-center gap-2">
         <label for="height" class="text-xs font-light">Height</label>
         <GuiMenu class="focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
-          <input id="height" type="number" class="w-20 text-center focus:outline-none" v-model.number="newSize.height" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
+          <input
+            id="height"
+            type="number"
+            class="w-20 text-center focus:outline-none"
+            v-model.number="newSize.height"
+            :min="config.public.minCanvasSize"
+            :max="config.public.maxCanvasSize"
+            @focus="userStore.stopKeybinds"
+            @blur="userStore.restartKeybinds"
+          />
         </GuiMenu>
       </div>
 
@@ -30,6 +48,8 @@ const emit = defineEmits<{
 const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas, canvasSize } = storeToRefs(canvasStore);
 const config = useRuntimeConfig();
+
+const userStore = useUserStore();
 
 const newSize = reactive({
   width: canvasSize.value.width,

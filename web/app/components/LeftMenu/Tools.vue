@@ -1,6 +1,14 @@
 <template>
   <GuiButtonGroup>
-    <GuiInnerButton v-for="tool in tools" :key="tool" :image="`/icons/${tool}.svg`" :is-active="activeTool === tool" :label="`Use the ${tool} tool`" @clicked="useSetTool(tool)" />
+    <GuiInnerButton
+      v-for="tool in tools"
+      :key="tool"
+      :image="`/icons/${tool}.svg`"
+      :is-active="activeTool === tool"
+      :label="tool[0]!.toUpperCase() + tool.slice(1)"
+      tooltip-direction="bottom"
+      @clicked="useSetTool(tool)"
+    />
   </GuiButtonGroup>
 </template>
 

@@ -1,15 +1,27 @@
 <template>
   <GuiMenu class="flex w-full flex-col items-center justify-center gap-6 p-6">
     <div class="flex w-full items-center justify-between">
-      <button @click="openColorPicker('primary')" :disabled="!!pickingColor" class="h-12 w-18 rounded-xl border border-neutral-400/50" :style="{ backgroundColor: primaryColor }"></button>
+      <button
+        @click="openColorPicker('primary')"
+        :disabled="!!pickingColor"
+        class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
+        data-tip="Primary Color"
+        :style="{ backgroundColor: primaryColor }"
+      ></button>
 
       <GuiMenu class="flex items-center justify-center rounded-full! px-0.5 backdrop-blur-none!">
-        <button @click="swapColors" :disabled="!!pickingColor" class="w-full rounded-full px-2 py-1" :class="pickingColor ? 'opacity-30' : 'hover:bg-neutral-200/35'">
+        <button @click="swapColors" :disabled="!!pickingColor" class="du-tooltip w-full rounded-full px-2 py-1" data-tip="Swap Colors" :class="pickingColor ? 'opacity-30' : 'hover:bg-neutral-200/35'">
           <img class="size-5" src="/icons/swap.svg" aria-hidden="true" />
         </button>
       </GuiMenu>
 
-      <button @click="openColorPicker('secondary')" :disabled="!!pickingColor" class="h-12 w-18 rounded-xl border border-neutral-400/50" :style="{ backgroundColor: secondaryColor }"></button>
+      <button
+        @click="openColorPicker('secondary')"
+        :disabled="!!pickingColor"
+        class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
+        data-tip="Secondary Color"
+        :style="{ backgroundColor: secondaryColor }"
+      ></button>
     </div>
 
     <div class="flex flex-wrap items-center justify-around gap-2" v-auto-animate>

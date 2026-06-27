@@ -17,7 +17,11 @@ export default defineNuxtConfig({
       minZoom: 0.1,
       maxZoom: 50,
       minCanvasSize: 1,
-      maxCanvasSize: 4200
+      maxCanvasSize: 4200,
+      minBrushSize: 1,
+      maxBrushSize: 400,
+      minFontSize: 1,
+      maxFontSize: 400
     }
   },
   app: {

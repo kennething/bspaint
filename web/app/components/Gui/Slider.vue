@@ -5,7 +5,20 @@
         <label :for="`number-${nameId}`" class="sr-only">{{ name }}</label>
         <input ref="manual-input" :id="`number-${nameId}`" type="number" class="my-1.25 h-full w-full" :min="min" :max="max" v-model.number="model" @blur="inputOff" @change="inputOff" />
       </div>
-      <button v-else @click="inputOn" class="w-full" :aria-label="`Change ${name} value`">
+      <button
+        v-else
+        @click="inputOn"
+        class="w-full"
+        :aria-label="`Change ${name} value`"
+        :data-tip="buttonTooltipDirection ? `${customButtonTooltip || name}` : undefined"
+        :class="{
+          'du-tooltip': buttonTooltipDirection,
+          'du-tooltip-top': buttonTooltipDirection === 'top',
+          'du-tooltip-bottom': buttonTooltipDirection === 'bottom',
+          'du-tooltip-left': buttonTooltipDirection === 'left',
+          'du-tooltip-right': buttonTooltipDirection === 'right'
+        }"
+      >
         <img class="w-full p-1" :src="image" aria-hidden="true" />
       </button>
     </div>
@@ -28,8 +41,11 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  name: string;
+  name: KeybindName | (string & {});
   image: string;
+  customButtonTooltip?: string;
+  /** tooltip for the button.img on the left */
+  buttonTooltipDirection?: "top" | "bottom" | "left" | "right";
   min: number;
   max: number;
   step?: number;
@@ -43,6 +59,8 @@ const emit = defineEmits<{
 }>();
 
 const model = defineModel<number>();
+
+const userStore = useUserStore();
 
 const tempModel = ref(props.isSkewed ? unskew(model.value!) : model.value);
 const skipSkew = ref(false);
@@ -79,6 +97,7 @@ const manualInput = useTemplateRef("manual-input");
 
 let unroundedValue: number | null = null;
 async function inputOn() {
+  userStore.stopKeybinds();
   unroundedValue = model.value!;
   model.value = Math.round(model.value!);
 
@@ -90,6 +109,7 @@ async function inputOn() {
   manualInput.value?.select();
 }
 function inputOff() {
+  userStore.restartKeybinds();
   showManualInput.value = false;
 
   if (model.value === Math.round(unroundedValue!)) {

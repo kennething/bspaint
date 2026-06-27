@@ -1,7 +1,7 @@
 <template>
   <GuiButtonGroup>
-    <GuiInnerButton image="/icons/undo.svg" label="Undo the last action" :is-disabled="!canUndo" @clicked="canvasStore.changeHistory('undo')" />
-    <GuiInnerButton image="/icons/redo.svg" label="Redo the last action" :is-disabled="!canRedo" @clicked="canvasStore.changeHistory('redo')" />
+    <GuiInnerButton image="/icons/undo.svg" label="Undo" tooltip-direction="bottom" :is-disabled="!canUndo" @clicked="canvasStore.changeHistory('undo')" />
+    <GuiInnerButton image="/icons/redo.svg" label="Redo" tooltip-direction="bottom" :is-disabled="!canRedo" @clicked="canvasStore.changeHistory('redo')" />
   </GuiButtonGroup>
 </template>
 

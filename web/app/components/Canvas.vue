@@ -7,11 +7,11 @@
 <script setup lang="ts">
 import { Canvas, InteractiveFabricObject } from "fabric";
 import { v7 } from "uuid";
-
+// TODO: copy and paste fabric objects
 const canvasRef = useTemplateRef("canvas");
 
 const canvasStore = useCanvasStore();
-const { activeLayerId, layers, canvasSize } = storeToRefs(canvasStore);
+const { activeLayerId, canvasSize, activeLayer } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
 const { backgroundColor } = storeToRefs(toolStore);
 
@@ -59,13 +59,13 @@ onMounted(() => {
 
   canvasStore.fabricCanvas.on("object:added", (event) => {
     event.target.set({ uuid: v7() });
-    useSaveHistory(event);
+    useSaveHistory(event, true);
   });
   canvasStore.fabricCanvas.on("object:modified", useSaveHistory);
   canvasStore.fabricCanvas.on("object:removed", useSaveHistory);
   canvasStore.fabricCanvas.on("path:created", (event) => {
     event.path.set({ layerId: activeLayerId.value });
-    event.path.opacity = (layers.value.find((layer) => layer.id === activeLayerId.value)?.opacity ?? 100) / 100;
+    event.path.opacity = activeLayer.value.opacity / 100;
     canvasStore.saveHistory();
   });
 

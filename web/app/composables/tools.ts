@@ -13,17 +13,19 @@ export function useUpdateBrush() {
   canvas.value.freeDrawingBrush = new PencilBrush(canvas.value);
   canvas.value.freeDrawingBrush.color = primaryColor.value;
   canvas.value.freeDrawingBrush.width = brushSize.value;
+  // TODO: store previous mouse move event and use to call handleBrushPreview
 }
 
 /** sets the active tool in `toolStore` */
 export function useSetTool(tool: Tool) {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, layers, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, activeLayer, layers, activeLayerId } = storeToRefs(canvasStore);
 
   const toolStore = useToolStore();
   toolStore.activeTool = tool;
   if (!canvas.value) return;
 
+  canvas.value.discardActiveObject();
   canvas.value.isDrawingMode = false;
   canvas.value.selection = false;
   canvas.value.forEachObject((obj) => {
@@ -32,8 +34,7 @@ export function useSetTool(tool: Tool) {
     if (obj.name === "brushPreview") canvas.value?.remove(obj);
   });
 
-  const activeLayer = layers.value.find((layer) => layer.id === activeLayerId.value);
-  if (activeLayer?.isLocked) return canvas.value.setCursor("not-allowed");
+  if (activeLayer.value.isLocked) return canvas.value.setCursor("not-allowed");
 
   if (tool === "select") {
     canvas.value.selection = true;

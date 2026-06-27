@@ -2,6 +2,8 @@ export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO:
 
 export const useToolStore = defineStore("toolStore", () => {
   const activeTool = ref<Tool>("brush");
+  watch(activeTool, (_, oldTool) => (previousTool.value = oldTool));
+  const previousTool = ref<Tool>("select");
   const zoomLevel = ref(1);
 
   const backgroundColor = ref("#FFFFFFFF");
@@ -36,5 +38,5 @@ export const useToolStore = defineStore("toolStore", () => {
     useUpdateBrush();
   }
 
-  return { activeTool, backgroundColor, primaryColor, secondaryColor, recentColors, brushSize, fontSize, fontFamily, zoomLevel, setColor };
+  return { activeTool, previousTool, backgroundColor, primaryColor, secondaryColor, recentColors, brushSize, fontSize, fontFamily, zoomLevel, setColor };
 });
