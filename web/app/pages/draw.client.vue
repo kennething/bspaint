@@ -52,8 +52,7 @@ async function handleKeyDown(event: KeyboardEvent) {
   });
   if (!validKeybind) return;
 
-  if (validKeybind.action === "Delete Selected") canvas.value.getActiveObjects().forEach((obj) => canvas.value?.remove(obj));
-  else if (validKeybind.action === "Undo") canvasStore.changeHistory("undo");
+  if (validKeybind.action === "Undo") canvasStore.changeHistory("undo");
   else if (validKeybind.action === "Redo") canvasStore.changeHistory("redo");
   else if (validKeybind.action === "Brush") useSetTool("brush");
   else if (validKeybind.action === "Text") useSetTool("text");
@@ -67,8 +66,6 @@ async function handleKeyDown(event: KeyboardEvent) {
   else if (validKeybind.action === "Layer Up")
     activeLayerId.value = canvasStore.layers[canvasStore.layers.findIndex((l) => l.id === activeLayerId.value) + 1]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Layer Down") activeLayerId.value = canvasStore.layers[canvasStore.layers.findIndex((l) => l.id === activeLayerId.value) - 1]?.id ?? canvasStore.layers[0]!.id;
-  else if (validKeybind.action === "Layer Opacity Down") activeLayer.value.opacity = Math.max(activeLayer.value.opacity - 10, 0);
-  else if (validKeybind.action === "Layer Opacity Up") activeLayer.value.opacity = Math.min(activeLayer.value.opacity + 10, 100);
   else if (validKeybind.action === "Reset Zoom") useResetZoom();
   else if (validKeybind.action === "Zoom In") zoomLevel.value = Math.min(zoomLevel.value + 0.1, config.public.maxZoom);
   else if (validKeybind.action === "Zoom Out") zoomLevel.value = Math.max(zoomLevel.value - 0.1, config.public.minZoom);
@@ -83,6 +80,20 @@ async function handleKeyDown(event: KeyboardEvent) {
   else if (validKeybind.action === "Select Layer 8") activeLayerId.value = canvasStore.layers[7]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Select Layer 9") activeLayerId.value = canvasStore.layers[8]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Delete Selected") {
+    canvas.value.getActiveObjects().forEach((obj) => canvas.value?.remove(obj));
+    canvas.value.discardActiveObject();
+  } // delete selected
+  else if (validKeybind.action === "Layer Opacity Down") {
+    activeLayer.value.opacity = Math.max(activeLayer.value.opacity - 10, 0);
+    useBrushPreview();
+    useTextPreview();
+  } // layer opacity down
+  else if (validKeybind.action === "Layer Opacity Up") {
+    activeLayer.value.opacity = Math.min(activeLayer.value.opacity + 10, 100);
+    useBrushPreview();
+    useTextPreview();
+  } // layer opacity up
   else if (validKeybind.action === "Swap Tools") {
     // * previous -> active swap is in the watcher in toolStore
     useSetTool(toolStore.previousTool);
@@ -107,9 +118,10 @@ async function handleKeyDown(event: KeyboardEvent) {
   } // togle canvas guide
   else if (validKeybind.action === "Tool Size Down") {
     const tool = toolStore.activeTool;
-    if (tool === "brush")
+    if (tool === "brush") {
       toolStore.brushSize = Math.max(toolStore.brushSize - 1, config.public.minBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
-    else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
+      useUpdateBrush();
+    } else if (tool === "text") toolStore.fontSize = Math.max(toolStore.fontSize - 1, config.public.minFontSize);
     else if (tool === "select") {
       if (toolStore.selectedObject instanceof Path) {
         toolStore.selectedObjectChangedEvent = true;
@@ -124,9 +136,10 @@ async function handleKeyDown(event: KeyboardEvent) {
   } // tool size down
   else if (validKeybind.action === "Tool Size Up") {
     const tool = toolStore.activeTool;
-    if (tool === "brush")
+    if (tool === "brush") {
       toolStore.brushSize = Math.min(toolStore.brushSize + 1, config.public.maxBrushSize); // useBrushPreview called in watcher in LeftMenu/Modifiers
-    else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
+      useUpdateBrush();
+    } else if (tool === "text") toolStore.fontSize = Math.min(toolStore.fontSize + 1, config.public.maxFontSize);
     else if (tool === "select") {
       if (toolStore.selectedObject instanceof Path) {
         toolStore.selectedObjectChangedEvent = true;

@@ -28,6 +28,8 @@ export const useCanvasStore = defineStore("canvasStore", () => {
 
   const lastMousePosEvent = markRaw(shallowRef<TPointerEventInfo<TPointerEvent | WheelEvent>>());
   const mousePos = reactive({ x: 0, y: 0 });
+  const isMiddleMousePanning = ref(false);
+
   const canvasSize = reactive({ width: 0, height: 0 });
   const showBoundingRect = ref(true);
 
@@ -61,6 +63,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
       activeLayerId: activeLayerId.value
     });
     historyIndex.value = history.value.length - 1;
+    useRedrawBoundingRect();
   }
   async function changeHistory(type: "undo" | "redo") {
     if ((type === "undo" && !canUndo.value) || (type === "redo" && !canRedo.value)) return;
@@ -230,6 +233,7 @@ export const useCanvasStore = defineStore("canvasStore", () => {
     lastCopiedContent,
     lastMousePosEvent,
     mousePos,
+    isMiddleMousePanning,
     canvasSize,
     showBoundingRect,
     isExportingOpen,

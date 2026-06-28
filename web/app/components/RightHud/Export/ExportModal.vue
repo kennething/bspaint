@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <GuiMenu do-transition class="fixed top-1/2 left-1/2 z-20 flex h-1/2 -translate-x-1/2 -translate-y-1/2 items-start justify-around gap-4 p-4 shadow-lg! shadow-neutral-400/50!" @click.stop>
-      <img :src="canvasPreview" class="transparent-sprite-sm h-50 max-h-[50vh] max-w-[50vw] border border-neutral-400/50" alt="Preview" />
+      <img :src="canvasPreview" class="h-50 max-h-[50vh] max-w-[50vw] border border-neutral-400/50" :class="{ 'transparent-sprite-sm': options.format !== 'jpg' || !hasTransparency }" alt="Preview" />
 
       <div class="flex h-full w-100 flex-col items-center justify-between gap-2">
         <div class="flex w-full flex-col items-center justify-start gap-8">
@@ -23,9 +23,25 @@
               v-for="option in formatOptions"
               :key="option"
               class="flex w-1/3! grow items-center justify-center rounded-full! backdrop-blur-none!"
-              :class="!options.fileOrCopy ? 'cursor-not-allowed opacity-30' : options.format === option ? 'border-blue-100/90! bg-blue-100/70! hover:bg-blue-200/50!' : 'hover:bg-neutral-200/35!'"
+              :class="
+                !options.fileOrCopy || (options.fileOrCopy === 'copy' && ['jpg', 'webp'].includes(option))
+                  ? 'cursor-not-allowed opacity-30'
+                  : options.format === option
+                    ? 'border-blue-100/90! bg-blue-100/70! hover:bg-blue-200/50!'
+                    : 'hover:bg-neutral-200/35!'
+              "
             >
-              <button class="h-full w-full rounded-full py-2 text-xl font-light" :disabled="!options.fileOrCopy" @click="options.format = option">.{{ option.toUpperCase() }}</button>
+              <button
+                class="h-full w-full rounded-full py-2 text-xl font-light"
+                :disabled="!options.fileOrCopy || (options.fileOrCopy === 'copy' && ['jpg', 'webp'].includes(option))"
+                @click="options.format = option"
+              >
+                .{{ option.toUpperCase() }}
+              </button>
+            </GuiMenu>
+
+            <GuiMenu v-if="options.format === 'jpg' && hasTransparency" class="rounded-full! border-red-200/70! bg-red-100/50! px-6!">
+              <p class="text-center">Background and layer transparency will be lost when converting to .JPG</p>
             </GuiMenu>
           </div>
 
@@ -72,10 +88,11 @@ const emit = defineEmits<{
 
 const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas } = storeToRefs(canvasStore);
-
+const toolStore = useToolStore();
 const userStore = useUserStore();
 
 const canvasPreview = ref<string>();
+const hasTransparency = computed(() => toolStore.backgroundColor.slice(7, 9) !== "FF" || canvasStore.layers.some((layer) => layer.opacity !== 100));
 
 onBeforeMount(async () => {
   if (!canvas.value) return console.warn("handleResize no fabricCanvas");
@@ -90,6 +107,12 @@ const options = reactive({
   fileName: undefined as string | undefined
 });
 watch(
+  () => options.fileOrCopy,
+  (newVal) => {
+    if (newVal === "copy" && options.format && ["jpg", "webp"].includes(options.format)) options.format = undefined;
+  }
+);
+watch(
   () => options.fileName,
   (newVal) => {
     if (newVal?.endsWith(`.${options.format}`)) options.fileName = newVal.slice(0, -`.${options.format}`.length);
@@ -97,7 +120,43 @@ watch(
 );
 
 const canSubmit = computed(() => !!options.fileOrCopy && !!options.format && ((options.fileOrCopy === "file" && !!options.fileName) || options.fileOrCopy === "copy"));
-function save() {} // TODO: todo
+async function save() {
+  if (!canSubmit.value) return console.warn("save no canSubmit");
+  if (!canvas.value) return console.warn("save no fabricCanvas");
+
+  if (options.format === "svg") {
+    const svgString = await useCanvasToImage("svg");
+    const svgFile = new File([svgString], `${options.fileOrCopy === "file" ? options.fileName : "image"}.svg`, { type: "image/svg+xml" });
+
+    if (options.fileOrCopy === "copy") {
+      await navigator.clipboard.write([new ClipboardItem({ [svgFile.type]: svgFile })]);
+    } // copy
+    else {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(svgFile);
+      link.download = svgFile.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } // file
+  } // svg format
+  else {
+    if (options.fileOrCopy === "copy") {
+      const blob = await useCanvasToImage(options.format!, true);
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    } else {
+      const url = await useCanvasToImage(options.format!);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${options.fileName}.${options.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } // file
+  } // else
+
+  emit("close");
+}
 </script>
 
 <style scoped></style>

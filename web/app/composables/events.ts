@@ -75,7 +75,7 @@ export function useBrushPreview(event?: TPointerEventInfo<TPointerEvent | WheelE
     const brushPreview = new Circle({
       left: event.scenePoint.x,
       top: event.scenePoint.y,
-      radius: toolStore.brushSize / 2 - 0.5,
+      radius: Math.max(toolStore.brushSize / 2 - 0.5, 0.05),
       fill: toolStore.primaryColor,
       stroke: toolStore.primaryColor,
       selectable: false,
@@ -101,11 +101,10 @@ export function useTextPreview(event?: TPointerEventInfo<TPointerEvent | WheelEv
     const existing = canvasStore.fabricCanvas.getObjects().find((obj) => obj.name === "textPreview");
     if (existing) canvasStore.fabricCanvas.remove(existing);
 
-    // TODO: make it blink maybe
     const textPreview = new Rect({
       left: event.scenePoint.x,
       top: event.scenePoint.y,
-      width: toolStore.fontSize * 0.15,
+      width: toolStore.fontSize * 0.1,
       height: toolStore.fontSize,
       fill: toolStore.primaryColor,
       stroke: toolStore.primaryColor,
@@ -122,7 +121,7 @@ export function useTextPreview(event?: TPointerEventInfo<TPointerEvent | WheelEv
 
 export function useSetupMouseDown() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, activeLayer, activeLayerId } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, activeLayer, activeLayerId, isMiddleMousePanning } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   const toolStore = useToolStore();
@@ -130,9 +129,11 @@ export function useSetupMouseDown() {
 
   const userStore = useUserStore();
 
-  // TODO: add middle click scrolling
   canvas.value.on("mouse:down", (event) => {
     if (!canvas.value) return console.warn("setupMouseDown no fabricCanvas");
+
+    isMiddleMousePanning.value = "button" in event.e && event.e.button === 1;
+    if (isMiddleMousePanning.value) return;
 
     const isLeftClick = "button" in event.e && event.e.button === 0;
 
@@ -180,14 +181,26 @@ export function useSetupMouseDown() {
       useSetTool("select");
     } // text
   });
+
+  canvas.value.on("mouse:up", () => {
+    isMiddleMousePanning.value = false;
+  });
 }
 
 export function useSetupMouseMove() {
   const canvasStore = useCanvasStore();
-  const { fabricCanvas: canvas, lastMousePosEvent } = storeToRefs(canvasStore);
+  const { fabricCanvas: canvas, lastMousePosEvent, isMiddleMousePanning } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupMouseMove no fabricCanvas");
 
   canvas.value.on("mouse:move", (event) => {
+    if (!canvas.value) return console.warn("setupMouseMove no fabricCanvas");
+
+    if (isMiddleMousePanning.value && "offsetX" in event.e) {
+      canvas.value.viewportTransform[4] += event.e.movementX;
+      canvas.value.viewportTransform[5] += event.e.movementY;
+      canvas.value.requestRenderAll();
+    }
+
     lastMousePosEvent.value = event;
     useMousePosTracking(event);
     useBrushPreview(event);
@@ -326,7 +339,6 @@ export function useRedrawBoundingRect() {
     opacity: showBoundingRect.value ? 1 : 0
   });
   canvas.value.add(boundingRect);
-  canvas.value.sendObjectToBack(boundingRect);
 
   const boundingText = new IText(
     "only things INSIDE the canvas area will be exported.\nabove is a convenient red rectangle guide to make sure ur inside the canvas area.\nclick the coordinates in the bottom left to turn off the guide",

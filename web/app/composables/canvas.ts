@@ -2,7 +2,10 @@
  *
  * returns a blob url if `to` is `png`, `jpg`, or `webp`
  */
-export async function useCanvasToImage(to: "svg" | "png" | "jpg" | "webp"): Promise<string> {
+export async function useCanvasToImage(to: "svg" | "png" | "jpg" | "webp", getBlob?: false): Promise<string>;
+/** @param getBlob returns a blob instead of blob url if `to` is `png`, `jpg`, or `webp` */
+export async function useCanvasToImage(to: "png" | "jpg" | "webp", getBlob: true): Promise<Blob>;
+export async function useCanvasToImage(to: "svg" | "png" | "jpg" | "webp", getBlob = false): Promise<string | Blob> {
   const canvasStore = useCanvasStore();
   const { fabricCanvas: canvas, canvasSize } = storeToRefs(canvasStore);
 
@@ -32,10 +35,13 @@ export async function useCanvasToImage(to: "svg" | "png" | "jpg" | "webp"): Prom
       ctx?.drawImage(image, 0, 0);
       URL.revokeObjectURL(url);
 
-      canvas.toBlob((blob) => {
-        if (!blob) return reject(new Error("useCanvasToImage no blob"));
-        resolve(URL.createObjectURL(blob));
-      }, `image/${to}`);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("useCanvasToImage no blob"));
+          resolve(getBlob ? blob : URL.createObjectURL(blob));
+        },
+        `image/${to === "jpg" ? "jpeg" : to}`
+      );
     };
   });
 }

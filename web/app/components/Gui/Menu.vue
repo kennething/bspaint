@@ -17,7 +17,7 @@ onMounted(() => (showTransition.value = true));
 @reference "../../assets/main.css";
 
 .solid-ass {
-  @apply border-sky-base/90 bg-sky-base/70 rounded-xl border-2 shadow shadow-neutral-200/60 backdrop-blur-sm;
+  @apply border-sky-base/90 bg-sky-base/70 rounded-xl border-2 shadow shadow-neutral-200/60 backdrop-blur-md;
 }
 
 @keyframes expand {
