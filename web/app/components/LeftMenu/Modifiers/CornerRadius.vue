@@ -2,12 +2,11 @@
   <GuiSlider
     class="backdrop-blur-none!"
     v-model="model"
-    name="Font Size"
-    :custom-button-tooltip="`Font Size (${specialKeys.arrowup}/${specialKeys.arrowdown})`"
+    name="Corner Radius"
     button-tooltip-direction="right"
-    image="/icons/text-size.svg"
-    :min="config.public.minFontSize"
-    :max="config.public.maxFontSize"
+    image="/icons/angle.svg"
+    :min="config.public.minCornerRadius"
+    :max="config.public.maxCornerRadius"
     is-skewed
     :tooltip-format="(value) => `${Math.round(value)}px`"
   />

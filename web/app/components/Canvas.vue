@@ -55,6 +55,7 @@ onMounted(() => {
 
   useSetupScroll();
   useSetupMouseDown();
+  useSetupMouseUp();
   useSetupMouseMove();
   useSetupSelection();
 

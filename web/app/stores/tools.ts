@@ -1,6 +1,7 @@
 import { FabricObject } from "fabric";
 
-export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select"; // TODO: fill, rectangle? circle? -shapes
+export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select" | "shape"; // TODO: fill, rectangle? circle? -shapes
+export type ShapeType = "rectangle" | "circle" | "triangle";
 
 export const useToolStore = defineStore("toolStore", () => {
   const activeTool = ref<Tool>("brush");
@@ -28,6 +29,12 @@ export const useToolStore = defineStore("toolStore", () => {
   const fontSize = ref(24);
   const fontFamily = ref<FontFamily>("Comic Sans MS");
 
+  const isCreatingShape = ref(false);
+  const createShapeStartPos = ref<{ x: number; y: number }>();
+  const selectedShape = ref<ShapeType>("rectangle");
+  const strokeWidth = ref(1);
+  const cornerRadius = ref(0);
+
   watch(backgroundColor, (newColor) => {
     const canvasStore = useCanvasStore();
     if (!canvasStore.fabricCanvas) return console.warn("watch backgroundColor no fabricCanvas");
@@ -53,6 +60,10 @@ export const useToolStore = defineStore("toolStore", () => {
   return {
     activeTool,
     previousTool,
+    zoomLevel,
+    selectedObject,
+    stopWatchers,
+    selectedObjectChangedEvent,
     backgroundColor,
     primaryColor,
     secondaryColor,
@@ -60,10 +71,11 @@ export const useToolStore = defineStore("toolStore", () => {
     brushSize,
     fontSize,
     fontFamily,
-    zoomLevel,
-    setColor,
-    selectedObject,
-    stopWatchers,
-    selectedObjectChangedEvent
+    isCreatingShape,
+    createShapeStartPos,
+    selectedShape,
+    strokeWidth,
+    cornerRadius,
+    setColor
   };
 });

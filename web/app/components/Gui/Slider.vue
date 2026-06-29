@@ -83,11 +83,15 @@ watch(model, (newValue) => {
 });
 /** takes percent 0-100 and turns into actual value min-max */
 function skew(value: number) {
-  return props.min * Math.pow(props.max / props.min, value / 100);
+  if (value === 0) return props.min;
+  const min = props.min || 1;
+  return min * Math.pow(props.max / min, value / 100);
 }
 /** takes actual value min-max and turns into percent 0-100 */
 function unskew(value: number) {
-  return (Math.log(value / props.min) / Math.log(props.max / props.min)) * 100;
+  if (value === props.min) return 0;
+  const min = props.min || 1;
+  return (Math.log(value / min) / Math.log(props.max / min)) * 100;
 }
 
 const nameId = props.name.toLowerCase().replace(/\s+/g, "-");

@@ -1,4 +1,4 @@
-import { ActiveSelection, Circle, FabricImage, IText, Point, Rect, type TPointerEvent, type TPointerEventInfo } from "fabric";
+import { ActiveSelection, Circle, Ellipse, FabricImage, FabricObject, IText, Point, Rect, Triangle, type TPointerEvent, type TPointerEventInfo } from "fabric";
 
 export function useSetupScroll() {
   const canvasStore = useCanvasStore();
@@ -125,7 +125,7 @@ export function useSetupMouseDown() {
   if (!canvas.value) return console.warn("setupScroll no fabricCanvas");
 
   const toolStore = useToolStore();
-  const { activeTool, primaryColor, secondaryColor, fontFamily, fontSize } = storeToRefs(toolStore);
+  const { activeTool, primaryColor, secondaryColor, fontFamily, fontSize, isCreatingShape, createShapeStartPos } = storeToRefs(toolStore);
 
   const userStore = useUserStore();
 
@@ -137,14 +137,14 @@ export function useSetupMouseDown() {
 
     const isLeftClick = "button" in event.e && event.e.button === 0;
 
-    if (["brush", "text"].includes(activeTool.value)) {
+    if (["brush", "text", "shape"].includes(activeTool.value)) {
       if (!isLeftClick) {
         const temp = primaryColor.value;
         primaryColor.value = secondaryColor.value;
         secondaryColor.value = temp;
         useUpdateBrush();
       }
-    } // brush/text
+    } // brush/text/shape
     else if (activeTool.value === "eyedropper") {
       const pointer = canvas.value.getViewportPoint(event.e);
       const ctx = canvas.value.getContext();
@@ -180,10 +180,44 @@ export function useSetupMouseDown() {
 
       useSetTool("select");
     } // text
+    else if (activeTool.value === "shape" && !event.target && isLeftClick) {
+      isCreatingShape.value = true;
+      createShapeStartPos.value = { x: event.scenePoint.x, y: event.scenePoint.y };
+    } // shape
   });
+}
+
+export function useSetupMouseUp() {
+  const canvasStore = useCanvasStore();
+  const { fabricCanvas: canvas, activeLayerId, isMiddleMousePanning } = storeToRefs(canvasStore);
+  if (!canvas.value) return console.warn("setupMouseUp no fabricCanvas");
+
+  const toolStore = useToolStore();
+  const { isCreatingShape, createShapeStartPos, strokeWidth, cornerRadius, selectedShape } = storeToRefs(toolStore);
 
   canvas.value.on("mouse:up", () => {
-    isMiddleMousePanning.value = false;
+    if (!canvas.value) return console.warn("setupMouseUp no fabricCanvas");
+
+    if (isMiddleMousePanning.value) isMiddleMousePanning.value = false;
+    if (isCreatingShape.value) {
+      isCreatingShape.value = false;
+
+      const shapePreview = canvas.value.getObjects().find((obj) => obj.name === "shapePreview");
+      if (!shapePreview) return;
+
+      shapePreview.set({
+        selectable: true,
+        evented: true,
+        excludeFromExport: false,
+        name: undefined,
+        layerId: activeLayerId.value
+      });
+
+      canvasStore.saveHistory();
+      useSetTool("select");
+      canvas.value.setActiveObject(shapePreview);
+      canvas.value.requestRenderAll();
+    } // creating shape
   });
 }
 
@@ -192,14 +226,49 @@ export function useSetupMouseMove() {
   const { fabricCanvas: canvas, lastMousePosEvent, isMiddleMousePanning } = storeToRefs(canvasStore);
   if (!canvas.value) return console.warn("setupMouseMove no fabricCanvas");
 
+  const toolStore = useToolStore();
+  const { activeTool, primaryColor, secondaryColor, isCreatingShape, createShapeStartPos, strokeWidth, cornerRadius, selectedShape } = storeToRefs(toolStore);
+
   canvas.value.on("mouse:move", (event) => {
     if (!canvas.value) return console.warn("setupMouseMove no fabricCanvas");
+
+    if (activeTool.value === "shape") canvas.value.setCursor("crosshair");
 
     if (isMiddleMousePanning.value && "offsetX" in event.e) {
       canvas.value.viewportTransform[4] += event.e.movementX;
       canvas.value.viewportTransform[5] += event.e.movementY;
       canvas.value.requestRenderAll();
-    }
+    } // middle mouse panning
+    if (isCreatingShape.value) {
+      const existing = canvas.value.getObjects().find((obj) => obj.name === "shapePreview");
+      if (existing) canvas.value.remove(existing);
+
+      const width = event.scenePoint.x - createShapeStartPos.value!.x;
+      const height = event.scenePoint.y - createShapeStartPos.value!.y;
+
+      const left = width >= 0 ? createShapeStartPos.value!.x + width / 2 : event.scenePoint.x + Math.abs(width) / 2;
+      const top = width >= 0 ? createShapeStartPos.value!.y + height / 2 : event.scenePoint.y + Math.abs(height) / 2;
+
+      let shape: FabricObject;
+      if (selectedShape.value === "rectangle") shape = new Rect({ left, top, width: Math.abs(width), height: Math.abs(height), rx: cornerRadius.value, ry: cornerRadius.value });
+      else if (selectedShape.value === "circle") shape = new Ellipse({ left, top, rx: Math.abs(width) / 2, ry: Math.abs(height) / 2 });
+      else shape = new Triangle({ left, top, width: Math.abs(width), height: Math.abs(height) });
+
+      shape.set({
+        fill: primaryColor.value,
+        stroke: secondaryColor.value,
+        strokeWidth: strokeWidth.value,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+        name: "shapePreview",
+        opacity: canvasStore.activeLayer.opacity / 100
+      });
+
+      canvas.value.add(shape);
+      useRedrawBoundingRect();
+      canvas.value.requestRenderAll();
+    } // creating shape
 
     lastMousePosEvent.value = event;
     useMousePosTracking(event);

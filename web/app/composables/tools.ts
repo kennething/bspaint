@@ -1,6 +1,8 @@
 import { PencilBrush } from "fabric";
 
-/** updates brush settings to current primary/secondary color and size */
+/** updates brush settings to current primary/secondary color and size
+ *
+ * also redraws brush preview */
 export function useUpdateBrush() {
   const canvasStore = useCanvasStore();
   const { fabricCanvas: canvas } = storeToRefs(canvasStore);
@@ -54,4 +56,7 @@ export function useSetTool(tool: Tool) {
   else if (tool === "text") {
     useTextPreview();
   } // text
+  else if (tool === "shape") {
+    canvas.value.setCursor("crosshair");
+  } // shape
 }

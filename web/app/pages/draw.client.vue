@@ -80,6 +80,12 @@ async function handleKeyDown(event: KeyboardEvent) {
   else if (validKeybind.action === "Select Layer 8") activeLayerId.value = canvasStore.layers[7]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Select Layer 9") activeLayerId.value = canvasStore.layers[8]?.id ?? canvasStore.layers[canvasStore.layers.length - 1]!.id;
   else if (validKeybind.action === "Select Top Layer") activeLayerId.value = canvasStore.layers[canvasStore.layers.length - 1]!.id;
+  else if (validKeybind.action === "Shape") {
+    if (toolStore.activeTool !== "shape") return useSetTool("shape");
+    if (toolStore.selectedShape === "rectangle") toolStore.selectedShape = "circle";
+    else if (toolStore.selectedShape === "circle") toolStore.selectedShape = "triangle";
+    else if (toolStore.selectedShape === "triangle") toolStore.selectedShape = "rectangle";
+  } // shape
   else if (validKeybind.action === "Delete Selected") {
     canvas.value.getActiveObjects().forEach((obj) => canvas.value?.remove(obj));
     canvas.value.discardActiveObject();

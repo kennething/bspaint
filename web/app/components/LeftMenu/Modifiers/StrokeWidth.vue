@@ -2,12 +2,12 @@
   <GuiSlider
     class="backdrop-blur-none!"
     v-model="model"
-    name="Font Size"
-    :custom-button-tooltip="`Font Size (${specialKeys.arrowup}/${specialKeys.arrowdown})`"
+    name="Stroke Width"
+    :custom-button-tooltip="`Stroke Width (${specialKeys.arrowup}/${specialKeys.arrowdown})`"
     button-tooltip-direction="right"
-    image="/icons/text-size.svg"
-    :min="config.public.minFontSize"
-    :max="config.public.maxFontSize"
+    image="/icons/stroke-width.svg"
+    :min="config.public.minStrokeWidth"
+    :max="config.public.maxStrokeWidth"
     is-skewed
     :tooltip-format="(value) => `${Math.round(value)}px`"
   />

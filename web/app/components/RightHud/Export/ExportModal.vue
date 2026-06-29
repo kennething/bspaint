@@ -40,8 +40,9 @@
               </button>
             </GuiMenu>
 
-            <GuiMenu v-if="options.format === 'jpg' && hasTransparency" class="rounded-full! border-red-200/70! bg-red-100/50! px-6!">
-              <p class="text-center">Background and layer transparency will be lost when converting to .JPG</p>
+            <GuiMenu v-if="options.format === 'jpg' && hasTransparency" class="flex items-center justify-center rounded-full! border-red-200/70! bg-red-100/50! px-6!">
+              <img class="size-6" src="/icons/warning.svg" aria-hidden="true" />
+              <p class="text-center">Background and layer transparency will be lost when converting to JPG</p>
             </GuiMenu>
           </div>
 

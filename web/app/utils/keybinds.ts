@@ -102,6 +102,12 @@ export type Keybind = {
 export const keybinds = [
   { keys: [["control", "shift", "alt"], "backspace"], macKeys: [["meta", "shift", "alt"], "backspace"], action: "Delete Layer", category: "layers" },
   { keys: [["control", "shift", "alt"], "delete"], macKeys: [["meta", "shift", "alt"], "delete"], action: "Delete Layer", category: "layers" },
+  { keys: [["alt"], "enter"], macKeys: [["control", "alt"], "enter"], action: "New Layer", category: "layers" }, // hardcoded tooltip
+  { keys: [["alt"], "arrowup"], macKeys: [["control", "alt"], "arrowup"], action: "Layer Up", category: "layers" },
+  { keys: [["alt"], "arrowdown"], macKeys: [["control", "alt"], "arrowdown"], action: "Layer Down", category: "layers" },
+  { keys: [["control"], "l"], macKeys: [["meta"], "l"], action: "Toggle Layer Lock", category: "layers" },
+  { keys: [["control"], "arrowup"], macKeys: [["meta"], "arrowup"], action: "Layer Opacity Up", category: "layers" }, // hardcoded tooltip
+  { keys: [["control"], "arrowdown"], macKeys: [["meta"], "arrowdown"], action: "Layer Opacity Down", category: "layers" }, // hardcoded tooltip
   { keys: [["alt"], "1"], macKeys: [["control", "alt"], "1"], action: "Select Layer 1", category: "layers" }, // hardcoded tooltip
   { keys: [["alt"], "2"], macKeys: [["control", "alt"], "2"], action: "Select Layer 2", category: "layers" }, // hardcoded tooltip
   { keys: [["alt"], "3"], macKeys: [["control", "alt"], "3"], action: "Select Layer 3", category: "layers" }, // hardcoded tooltip
@@ -112,28 +118,19 @@ export const keybinds = [
   { keys: [["alt"], "8"], macKeys: [["control", "alt"], "8"], action: "Select Layer 8", category: "layers" }, // hardcoded tooltip
   { keys: [["alt"], "9"], macKeys: [["control", "alt"], "9"], action: "Select Layer 9", category: "layers" }, // hardcoded tooltip
   { keys: [["alt"], "0"], macKeys: [["control", "alt"], "0"], action: "Select Top Layer", category: "layers" },
-  { keys: [["alt"], "enter"], macKeys: [["control", "alt"], "enter"], action: "New Layer", category: "layers" }, // hardcoded tooltip
-  { keys: [["alt"], "arrowup"], macKeys: [["control", "alt"], "arrowup"], action: "Layer Up", category: "layers" },
-  { keys: [["alt"], "arrowdown"], macKeys: [["control", "alt"], "arrowdown"], action: "Layer Down", category: "layers" },
   { keys: [["control"], "y"], macKeys: [["meta", "shift"], "z"], action: "Redo", category: "other" },
-  { keys: [[], ""], macKeys: [["meta"], "y"], action: "Redo", category: "other" },
   { keys: [["control"], "z"], macKeys: [["meta"], "z"], action: "Undo", category: "other" },
+  { keys: [["control"], "b"], macKeys: [["meta"], "b"], action: "Toggle Canvas Guide", category: "canvas" },
   { keys: [["control"], "/"], macKeys: [["meta"], "/"], action: "Help", category: "other" },
   { keys: [["control"], "s"], macKeys: [["meta"], "s"], action: "Export Canvas", category: "canvas" },
   { keys: [["control"], "d"], macKeys: [["meta"], "d"], action: "Resize Canvas", category: "canvas" },
-  { keys: [["control"], "a"], macKeys: [["meta"], "a"], action: "Select All", category: "canvas" },
-  { keys: [["control"], "l"], macKeys: [["meta"], "l"], action: "Toggle Layer Lock", category: "layers" },
-  { keys: [["control"], "b"], macKeys: [["meta"], "b"], action: "Toggle Canvas Guide", category: "canvas" },
-  { keys: [["control"], "arrowup"], macKeys: [["meta"], "arrowup"], action: "Layer Opacity Up", category: "layers" }, // hardcoded tooltip
-  { keys: [["control"], "arrowdown"], macKeys: [["meta"], "arrowdown"], action: "Layer Opacity Down", category: "layers" }, // hardcoded tooltip
-  { keys: [["control"], "0"], macKeys: [["meta"], "0"], action: "Reset Zoom", category: "canvas" },
-  { keys: [["control"], "-"], macKeys: [["meta"], "-"], action: "Zoom Out", category: "canvas" }, // hardcoded tooltip
   { keys: [["control"], "="], macKeys: [["meta"], "="], action: "Zoom In", category: "canvas" }, // hardcoded tooltip
+  { keys: [["control"], "-"], macKeys: [["meta"], "-"], action: "Zoom Out", category: "canvas" }, // hardcoded tooltip
+  { keys: [["control"], "0"], macKeys: [["meta"], "0"], action: "Reset Zoom", category: "canvas" },
+  { keys: [["control"], "x"], macKeys: [["meta"], "x"], action: "Cut", category: "canvas" },
   { keys: [["control"], "c"], macKeys: [["meta"], "c"], action: "Copy", category: "canvas" },
   { keys: [["control"], "v"], macKeys: [["meta"], "v"], action: "Paste", category: "canvas" },
-  { keys: [["control"], "x"], macKeys: [["meta"], "x"], action: "Cut", category: "canvas" },
-  { keys: [[], "arrowup"], action: "Tool Size Up", category: "tools" }, // hardcoded tooltip
-  { keys: [[], "arrowdown"], action: "Tool Size Down", category: "tools" }, // hardcoded tooltip
+  { keys: [["control"], "a"], macKeys: [["meta"], "a"], action: "Select All", category: "canvas" },
   { keys: [[], "escape"], action: "Deselect All", category: "canvas" },
   { keys: [[], "backspace"], action: "Delete Selected", category: "canvas" },
   { keys: [[], "delete"], action: "Delete Selected", category: "canvas" },
@@ -141,6 +138,10 @@ export const keybinds = [
   { keys: [[], "b"], action: "Brush", category: "tools" },
   { keys: [[], "t"], action: "Text", category: "tools" },
   { keys: [[], "e"], action: "Eyedropper", category: "tools" },
-  { keys: [[], " "], action: "Swap Tools", category: "tools" }
+  { keys: [[], "s"], action: "Shape", category: "tools" },
+  { keys: [[], "s"], action: "Cycle Shapes", category: "tools" }, // implemented in Shape
+  { keys: [[], " "], action: "Swap Tools", category: "tools" },
+  { keys: [[], "arrowup"], action: "Tool Size Up", category: "tools" }, // hardcoded tooltip
+  { keys: [[], "arrowdown"], action: "Tool Size Down", category: "tools" } // hardcoded tooltip
 ] as const satisfies Keybind[];
 export type KeybindName = (typeof keybinds)[number]["action"];

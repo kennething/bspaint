@@ -30,7 +30,11 @@ export default defineNuxtConfig({
       minBrushSize: 1,
       maxBrushSize: 400,
       minFontSize: 1,
-      maxFontSize: 400
+      maxFontSize: 400,
+      minStrokeWidth: 0,
+      maxStrokeWidth: 100,
+      minCornerRadius: 0,
+      maxCornerRadius: 999
     }
   },
   app: {

@@ -5,7 +5,7 @@
         @click="openColorPicker(singleColor ? 'other' : 'primary')"
         :disabled="!!pickingColor"
         class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
-        :data-tip="`${singleColor ? 'Fill' : 'Primary'} Color`"
+        :data-tip="`${primaryTooltip ? primaryTooltip : 'Primary'} Color`"
         :style="{ backgroundColor: singleColor ? singleColorModel : primaryColor }"
       ></button>
 
@@ -20,7 +20,7 @@
         @click="openColorPicker('secondary')"
         :disabled="!!pickingColor"
         class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
-        data-tip="Secondary Color"
+        :data-tip="`${secondaryTooltip ? secondaryTooltip : 'Secondary'} Color`"
         :style="{ backgroundColor: secondaryColor }"
       ></button>
     </div>
@@ -46,6 +46,10 @@
 const props = defineProps<{
   /** show only 1 color (if true, use v-model to model the hex code) */
   singleColor?: boolean;
+  /** tooltip for primary color */
+  primaryTooltip?: string;
+  /** tooltip for secondary color */
+  secondaryTooltip?: string;
 }>();
 
 const singleColorModel = defineModel<string>();

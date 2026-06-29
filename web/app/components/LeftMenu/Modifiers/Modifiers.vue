@@ -37,8 +37,13 @@
       <LeftMenuModifiersFontSize v-model="selectFontSize" />
       <LeftMenuModifiersFontFamily v-model="selectFontFamily" />
     </GuiMenu>
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6" v-else-if="selectedObjectIsShape">
+      <LeftMenuModifiersStrokeWidth v-model="selectStrokeWidth" />
+      <LeftMenuModifiersCornerRadius v-if="!!(selectedObject instanceof Rect)" v-model="selectCornerRadius" />
+    </GuiMenu>
 
-    <LeftMenuModifiersColors single-color v-model="selectColor" />
+    <LeftMenuModifiersColors v-if="selectedObjectIsShape" primary-tooltip="Fill" secondary-tooltip="Stroke" />
+    <LeftMenuModifiersColors v-else single-color v-model="selectColor" />
   </div>
 
   <div v-else-if="activeTool === 'brush'" class="flex flex-col items-center justify-center gap-2">
@@ -57,16 +62,29 @@
   </div>
 
   <LeftMenuModifiersColors v-else-if="activeTool === 'eyedropper'" />
+
+  <div v-else-if="activeTool === 'shape'" class="flex flex-col items-center justify-center gap-2">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
+      <GuiButtonGroup class="w-full!">
+        <GuiInnerButton class="grow" image="/icons/square.svg" label="Square" @clicked="selectedShape = 'rectangle'" :is-active="selectedShape === 'rectangle'" tooltip-direction="top" />
+        <GuiInnerButton class="grow" image="/icons/circle.svg" label="Circle" @clicked="selectedShape = 'circle'" :is-active="selectedShape === 'circle'" tooltip-direction="top" />
+        <GuiInnerButton class="grow" image="/icons/triangle.svg" label="Triangle" @clicked="selectedShape = 'triangle'" :is-active="selectedShape === 'triangle'" tooltip-direction="top" />
+      </GuiButtonGroup>
+      <LeftMenuModifiersStrokeWidth v-model="strokeWidth" />
+      <LeftMenuModifiersCornerRadius v-if="selectedShape === 'rectangle'" v-model="cornerRadius" />
+    </GuiMenu>
+    <LeftMenuModifiersColors primary-tooltip="Fill" secondary-tooltip="Stroke" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IText, Path } from "fabric";
+import { Ellipse, IText, Path, Rect, Triangle } from "fabric";
 
 // TODO: change properties of all selected objects instead of just 1
 const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { activeTool, brushSize, fontFamily, fontSize, selectedObject, stopWatchers, selectedObjectChangedEvent } = storeToRefs(toolStore);
+const { activeTool, brushSize, fontFamily, fontSize, selectedObject, stopWatchers, selectedObjectChangedEvent, strokeWidth, cornerRadius, selectedShape } = storeToRefs(toolStore);
 
 watch(brushSize, () => useBrushPreview());
 watch(fontSize, () => useTextPreview());
@@ -79,12 +97,16 @@ const selectX = ref(0);
 const selectY = ref(0);
 const selectAngle = ref(0);
 const selectColor = ref("#000000");
+const selectSecondaryColor = ref("#000000");
 const selectBrushSize = ref(brushSize.value);
 const selectFontSize = ref(fontSize.value);
 const selectFontFamily = ref(fontFamily.value);
+const selectStrokeWidth = ref(strokeWidth.value);
+const selectCornerRadius = ref(cornerRadius.value);
 
 const selectedObjectIsPath = computed(() => selectedObject.value instanceof Path);
 const selectedObjectIsText = computed(() => selectedObject.value instanceof IText);
+const selectedObjectIsShape = computed(() => selectedObject.value instanceof Rect || selectedObject.value instanceof Ellipse || selectedObject.value instanceof Triangle);
 
 watch(selectedObject, (newObject) => {
   if (!newObject) return;
@@ -103,6 +125,11 @@ watch(selectedObject, (newObject) => {
     selectFontSize.value = newObject.fontSize ?? fontSize.value;
     selectFontFamily.value = (newObject.fontFamily as FontFamily) ?? fontFamily.value;
     selectColor.value = newObject.fill?.toString() ?? "#000000";
+  } else if (newObject instanceof Rect || newObject instanceof Ellipse || newObject instanceof Triangle) {
+    selectColor.value = newObject.fill?.toString() ?? "#000000";
+    selectSecondaryColor.value = newObject.stroke?.toString() ?? "#000000";
+    selectStrokeWidth.value = newObject.strokeWidth ?? strokeWidth.value;
+    if (newObject instanceof Rect) selectCornerRadius.value = newObject.rx ?? cornerRadius.value;
   }
 
   const stopMoveWatching = selectedObject.value!.on("moving", () => {
@@ -126,6 +153,12 @@ watch(selectedObjectChangedEvent, (val) => {
 
   if (selectedObjectIsPath.value) selectBrushSize.value = selectedObject.value!.strokeWidth ?? brushSize.value;
   else if (selectedObjectIsText.value) selectFontSize.value = (selectedObject.value as IText).fontSize ?? fontSize.value;
+  else if (selectedObjectIsShape.value) {
+    selectColor.value = selectedObject.value!.fill?.toString() ?? "#000000";
+    selectSecondaryColor.value = selectedObject.value!.stroke?.toString() ?? "#000000";
+    selectStrokeWidth.value = selectedObject.value!.strokeWidth ?? strokeWidth.value;
+    if (selectedObject.value instanceof Rect) selectCornerRadius.value = selectedObject.value.rx ?? cornerRadius.value;
+  }
 });
 
 watch(selectWidth, (newWidth) => {
@@ -174,6 +207,11 @@ watch(selectAngle, (newAngle) => {
 watch(selectColor, (newColor) => {
   if (selectedObjectIsPath.value) selectedObject.value!.set({ stroke: newColor });
   else if (selectedObjectIsText.value) selectedObject.value!.set({ fill: newColor });
+  else if (selectedObjectIsShape.value) selectedObject.value!.set({ fill: newColor });
+  canvas.value?.requestRenderAll();
+});
+watch(selectSecondaryColor, (newColor) => {
+  if (selectedObjectIsShape.value) selectedObject.value!.set({ stroke: newColor });
   canvas.value?.requestRenderAll();
 });
 watch(selectBrushSize, (newSize) => {
@@ -186,6 +224,14 @@ watch(selectFontSize, (newSize) => {
 });
 watch(selectFontFamily, (newFamily) => {
   if (selectedObjectIsText.value) selectedObject.value!.set({ fontFamily: newFamily });
+  canvas.value?.requestRenderAll();
+});
+watch(selectStrokeWidth, (newWidth) => {
+  if (selectedObjectIsShape.value) selectedObject.value!.set({ strokeWidth: newWidth });
+  canvas.value?.requestRenderAll();
+});
+watch(selectCornerRadius, (newRadius) => {
+  if (selectedObject.value instanceof Rect) selectedObject.value!.set({ rx: newRadius, ry: newRadius });
   canvas.value?.requestRenderAll();
 });
 </script>
