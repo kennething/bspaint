@@ -7,6 +7,7 @@
 </template>
 
 <script setup lang="ts">
+// TODO: windows styles
 const props = defineProps<{ doTransition?: boolean }>();
 const showTransition = ref(!props.doTransition);
 

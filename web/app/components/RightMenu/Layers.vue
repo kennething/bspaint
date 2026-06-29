@@ -39,7 +39,7 @@
     </div>
   </GuiMenu>
 
-  <ColorPicker v-if="showColorPicker" @close="showColorPicker = false" editing-color="background" />
+  <ColorPicker v-if="showColorPicker" v-model="backgroundColor" allow-transparency @close="closeColorPicker" />
 </template>
 
 <script setup lang="ts">
@@ -64,6 +64,11 @@ async function newLayer() {
 watch(triggerNewLayer, (val) => {
   if (val) newLayer();
 });
+
+function closeColorPicker() {
+  useHandleResize();
+  showColorPicker.value = false;
+}
 </script>
 
 <style scoped></style>

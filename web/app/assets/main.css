@@ -49,3 +49,6 @@ input[type="number"]::-webkit-inner-spin-button {
 .transparent-sprite-sm {
   background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 1rem 1rem;
 }
+.transparent-sprite-xs {
+  background: conic-gradient(#ddd 25%, #fff 0 50%, #ddd 0 75%, #fff 0) 0 0 / 0.5rem 0.5rem;
+}

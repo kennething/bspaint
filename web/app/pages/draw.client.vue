@@ -116,6 +116,11 @@ async function handleKeyDown(event: KeyboardEvent) {
   } // select all
   else if (validKeybind.action === "Deselect All") {
     canvas.value.discardActiveObject();
+
+    const shapePreview = canvas.value.getObjects().find((obj) => obj.name === "shapePreview");
+    if (shapePreview) canvas.value.remove(shapePreview);
+    if (toolStore.isCreatingShape) toolStore.isCreatingShape = false;
+
     canvas.value.requestRenderAll();
   } // deselect all
   else if (validKeybind.action === "Toggle Canvas Guide") {

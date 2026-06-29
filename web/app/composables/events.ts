@@ -243,6 +243,8 @@ export function useSetupMouseMove() {
       const existing = canvas.value.getObjects().find((obj) => obj.name === "shapePreview");
       if (existing) canvas.value.remove(existing);
 
+      if (activeTool.value !== "shape") return (isCreatingShape.value = false);
+
       const width = event.scenePoint.x - createShapeStartPos.value!.x;
       const height = event.scenePoint.y - createShapeStartPos.value!.y;
 

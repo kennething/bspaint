@@ -14,7 +14,7 @@
         </div>
 
         <input
-          v-if="editingColor === 'background'"
+          v-if="allowTransparency"
           type="range"
           min="0"
           max="100"
@@ -31,13 +31,13 @@
             <div class="h-full w-full" :style="{ backgroundColor: color.hex }"></div>
           </div>
 
-          <GuiInput name="Hex" v-model="color.hex" @on-change="updateFromHex" inner-class="w-32" model-type="string" :maxlength="editingColor === 'background' ? 9 : 7" />
+          <GuiInput name="Hex" v-model="color.hex" @on-change="updateFromHex" inner-class="w-32" model-type="string" :maxlength="allowTransparency ? 9 : 7" />
 
           <div class="flex flex-col items-end justify-center gap-1">
             <GuiInput name="Red" v-model="color.r" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
             <GuiInput name="Green" v-model="color.g" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
             <GuiInput name="Blue" v-model="color.b" @on-change="updateFromRgb" model-type="number" :min="0" :max="255" />
-            <GuiInput v-if="editingColor === 'background'" name="Alpha" v-model="color.a" @on-change="updateFromRgb" model-type="number" :min="0" :max="100" />
+            <GuiInput v-if="allowTransparency" name="Alpha" v-model="color.a" @on-change="updateFromRgb" model-type="number" :min="0" :max="100" />
           </div>
         </div>
 
@@ -57,13 +57,10 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ editingColor: "primary" | "secondary" | "background" | "other" }>();
-const emit = defineEmits<{ close: [void] }>();
+const props = defineProps<{ allowTransparency?: boolean }>();
+const emit = defineEmits<{ close: [hex: string | void] }>();
 
-const toolStore = useToolStore();
-const { primaryColor, secondaryColor, backgroundColor } = storeToRefs(toolStore);
-
-const singleColorModel = defineModel<string>();
+const colorModel = defineModel<string>();
 
 const colorSquare = useTemplateRef("square");
 let isDragging = false;
@@ -78,43 +75,23 @@ const color = reactive({
   a: 100,
   hex: "#000000"
 });
-watch(primaryColor, (newColor) => {
-  if (props.editingColor !== "primary") return;
-  color.hex = newColor;
-  updateFromHex();
-});
-watch(secondaryColor, (newColor) => {
-  if (props.editingColor !== "secondary") return;
-  color.hex = newColor;
-  updateFromHex();
-});
-watch(singleColorModel, (newColor) => {
-  if (props.editingColor !== "other") return;
-  color.hex = newColor!;
-  updateFromHex();
+watch(colorModel, (newColor) => {
+  if (newColor) {
+    color.hex = newColor;
+    updateFromHex();
+  }
 });
 
 onBeforeMount(() => {
-  if (props.editingColor === "background") {
-    color.hex = backgroundColor.value;
-    color.a = hexToPercent(color.hex.slice(7, 9));
-  } else color.hex = props.editingColor === "primary" ? primaryColor.value : secondaryColor.value;
+  color.hex = colorModel.value!;
+  if (props.allowTransparency) color.a = hexToPercent(color.hex.slice(7, 9));
+
   updateFromHex();
 });
 
 function save() {
-  const colorHex = color.hex.slice(0, 7);
-
-  if (props.editingColor === "background") {
-    backgroundColor.value = color.hex;
-    useHandleResize();
-  } // background
-  else if (props.editingColor === "other") {
-    singleColorModel.value = colorHex;
-    toolStore.setColor("other", colorHex);
-  } // other
-  else toolStore.setColor(props.editingColor, colorHex);
-
+  if (!props.allowTransparency) colorModel.value = color.hex.slice(0, 7) + "FF";
+  else colorModel.value = color.hex;
   emit("close");
 }
 
@@ -126,7 +103,7 @@ function updateFromHsv() {
   color.b = newB;
 
   color.hex = rgbToHex(newR, newG, newB);
-  if (props.editingColor === "background") color.hex += percentToHex(color.a);
+  if (props.allowTransparency) color.hex += percentToHex(color.a);
 }
 function updateFromRgb() {
   color.r = Math.max(0, Math.min(255, color.r));
@@ -134,7 +111,7 @@ function updateFromRgb() {
   color.b = Math.max(0, Math.min(255, color.b));
 
   color.hex = rgbToHex(color.r, color.g, color.b);
-  if (props.editingColor === "background") color.hex += percentToHex(color.a);
+  if (props.allowTransparency) color.hex += percentToHex(color.a);
 
   const [newH, newS, newV] = rgbToHsv(color.r, color.g, color.b);
   color.h = newH;
@@ -148,7 +125,7 @@ function updateFromHex() {
       .split("")
       .map((char) => char + char)
       .join("");
-  if (props.editingColor === "background") cleanHex += percentToHex(color.a);
+  if (props.allowTransparency) cleanHex += percentToHex(color.a);
 
   const [newR, newG, newB] = hexToRgb(cleanHex.slice(0, 6));
   color.r = newR;
@@ -163,7 +140,7 @@ function updateFromHex() {
   color.v = newV;
 }
 function updateAlpha() {
-  if (props.editingColor !== "background") return;
+  if (!props.allowTransparency) return;
 
   color.a = Math.max(0, Math.min(100, color.a));
   color.hex += percentToHex(color.a);

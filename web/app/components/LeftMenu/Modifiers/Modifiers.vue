@@ -42,15 +42,23 @@
       <LeftMenuModifiersCornerRadius v-if="!!(selectedObject instanceof Rect)" v-model="selectCornerRadius" />
     </GuiMenu>
 
-    <LeftMenuModifiersColors v-if="selectedObjectIsShape" primary-tooltip="Fill" secondary-tooltip="Stroke" />
-    <LeftMenuModifiersColors v-else single-color v-model="selectColor" />
+    <LeftMenuModifiersColors
+      v-if="selectedObjectIsShape"
+      primary-tooltip="Fill"
+      v-model:primary="selectColor"
+      primary-can-transparent
+      secondary-tooltip="Stroke"
+      v-model:secondary="selectSecondaryColor"
+      secondary-can-transparent
+    />
+    <LeftMenuModifiersColors v-else single-color v-model:primary="selectColor" />
   </div>
 
   <div v-else-if="activeTool === 'brush'" class="flex flex-col items-center justify-center gap-2">
     <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
       <LeftMenuModifiersBrushSize v-model="brushSize" />
     </GuiMenu>
-    <LeftMenuModifiersColors />
+    <LeftMenuModifiersColors v-model:primary="primaryColor" v-model:secondary="secondaryColor" />
   </div>
 
   <div v-else-if="activeTool === 'text'" class="flex flex-col items-center justify-center gap-2">
@@ -58,10 +66,10 @@
       <LeftMenuModifiersFontSize v-model="fontSize" />
       <LeftMenuModifiersFontFamily v-model="fontFamily" />
     </GuiMenu>
-    <LeftMenuModifiersColors />
+    <LeftMenuModifiersColors v-model:primary="primaryColor" v-model:secondary="secondaryColor" />
   </div>
 
-  <LeftMenuModifiersColors v-else-if="activeTool === 'eyedropper'" />
+  <LeftMenuModifiersColors v-else-if="activeTool === 'eyedropper'" v-model:primary="primaryColor" v-model:secondary="secondaryColor" />
 
   <div v-else-if="activeTool === 'shape'" class="flex flex-col items-center justify-center gap-2">
     <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
@@ -73,7 +81,7 @@
       <LeftMenuModifiersStrokeWidth v-model="strokeWidth" />
       <LeftMenuModifiersCornerRadius v-if="selectedShape === 'rectangle'" v-model="cornerRadius" />
     </GuiMenu>
-    <LeftMenuModifiersColors primary-tooltip="Fill" secondary-tooltip="Stroke" />
+    <LeftMenuModifiersColors primary-tooltip="Fill" secondary-tooltip="Stroke" v-model:primary="primaryColor" primary-can-transparent v-model:secondary="secondaryColor" secondary-can-transparent />
   </div>
 </template>
 
@@ -84,7 +92,8 @@ import { Ellipse, IText, Path, Rect, Triangle } from "fabric";
 const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
-const { activeTool, brushSize, fontFamily, fontSize, selectedObject, stopWatchers, selectedObjectChangedEvent, strokeWidth, cornerRadius, selectedShape } = storeToRefs(toolStore);
+const { activeTool, primaryColor, secondaryColor, brushSize, fontFamily, fontSize, selectedObject, stopWatchers, selectedObjectChangedEvent, strokeWidth, cornerRadius, selectedShape } =
+  storeToRefs(toolStore);
 
 watch(brushSize, () => useBrushPreview());
 watch(fontSize, () => useTextPreview());
@@ -207,7 +216,10 @@ watch(selectAngle, (newAngle) => {
 watch(selectColor, (newColor) => {
   if (selectedObjectIsPath.value) selectedObject.value!.set({ stroke: newColor });
   else if (selectedObjectIsText.value) selectedObject.value!.set({ fill: newColor });
-  else if (selectedObjectIsShape.value) selectedObject.value!.set({ fill: newColor });
+  else if (selectedObjectIsShape.value) {
+    console.log(selectedObject.value);
+    selectedObject.value!.set({ fill: newColor });
+  }
   canvas.value?.requestRenderAll();
 });
 watch(selectSecondaryColor, (newColor) => {

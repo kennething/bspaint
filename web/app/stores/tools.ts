@@ -20,9 +20,11 @@ export const useToolStore = defineStore("toolStore", () => {
   });
 
   const backgroundColor = ref("#FFFFFFFF");
-  const primaryColor = ref("#000000");
-  const secondaryColor = ref("#FFFFFF");
+  const primaryColor = ref("#000000FF");
+  const secondaryColor = ref("#FFFFFFFF");
   const recentColors = ref<string[]>(new Array(10).fill(""));
+  watch(primaryColor, (newColor) => setColor("primary", newColor));
+  watch(secondaryColor, (newColor) => setColor("secondary", newColor));
 
   const brushSize = ref(5);
 

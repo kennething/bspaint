@@ -13,7 +13,7 @@ export function useUpdateBrush() {
   if (!canvas.value || activeTool.value !== "brush") return;
 
   canvas.value.freeDrawingBrush = new PencilBrush(canvas.value);
-  canvas.value.freeDrawingBrush.color = primaryColor.value;
+  canvas.value.freeDrawingBrush.color = primaryColor.value.slice(0, 7);
   canvas.value.freeDrawingBrush.width = brushSize.value;
   useBrushPreview();
 }
@@ -33,7 +33,7 @@ export function useSetTool(tool: Tool) {
   canvas.value.forEachObject((obj) => {
     obj.selectable = false;
     obj.evented = false;
-    if (obj.name === "brushPreview" || obj.name === "textPreview") canvas.value?.remove(obj);
+    if (obj.name && ["brushPreview", "textPreview", "shapePreview"].includes(obj.name)) canvas.value?.remove(obj);
   });
   canvas.value.requestRenderAll();
 

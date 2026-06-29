@@ -1,13 +1,16 @@
 <template>
   <GuiMenu class="flex w-full flex-col items-center justify-center gap-6 p-6">
     <div class="flex w-full items-center" :class="singleColor ? 'justify-center' : 'justify-between'">
-      <button
-        @click="openColorPicker(singleColor ? 'other' : 'primary')"
+      <div
+        role="button"
+        @click="openColorPicker('primary')"
         :disabled="!!pickingColor"
-        class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
+        class="du-tooltip h-12 w-18 overflow-hidden rounded-xl border border-neutral-400/50"
+        :class="{ 'transparent-sprite-sm': primaryCanTransparent }"
         :data-tip="`${primaryTooltip ? primaryTooltip : 'Primary'} Color`"
-        :style="{ backgroundColor: singleColor ? singleColorModel : primaryColor }"
-      ></button>
+      >
+        <div class="h-full w-full" :style="{ backgroundColor: primaryCanTransparent ? primaryColorModel : primaryColorModel?.slice(0, 7) }"></div>
+      </div>
 
       <GuiMenu v-if="!singleColor" class="flex items-center justify-center rounded-full! px-0.5 backdrop-blur-none!">
         <button @click="swapColors" :disabled="!!pickingColor" class="du-tooltip w-full rounded-full px-2 py-1" data-tip="Swap Colors" :class="pickingColor ? 'opacity-30' : 'hover:bg-neutral-200/35'">
@@ -15,61 +18,71 @@
         </button>
       </GuiMenu>
 
-      <button
+      <div
+        role="button"
         v-if="!singleColor"
         @click="openColorPicker('secondary')"
         :disabled="!!pickingColor"
-        class="du-tooltip h-12 w-18 rounded-xl border border-neutral-400/50"
+        class="du-tooltip h-12 w-18 overflow-hidden rounded-xl border border-neutral-400/50"
+        :class="{ 'transparent-sprite-sm': secondaryCanTransparent }"
         :data-tip="`${secondaryTooltip ? secondaryTooltip : 'Secondary'} Color`"
-        :style="{ backgroundColor: secondaryColor }"
-      ></button>
+      >
+        <div class="h-full w-full" :style="{ backgroundColor: secondaryCanTransparent ? secondaryColorModel : secondaryColorModel?.slice(0, 7) }"></div>
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center justify-around gap-2" v-auto-animate>
-      <button
+      <div
         v-for="color in recentColors"
         :key="color"
-        @click.left="singleColor ? (singleColorModel = color) : toolStore.setColor('primary', color)"
-        @click.right.prevent="toolStore.setColor('secondary', color)"
-        class="size-7 rounded-lg border border-neutral-300/50"
-        :class="{ 'bg-neutral-200/50': color === '' }"
+        role="button"
+        @click.left="primaryColorModel = color"
+        @click.right.prevent="secondaryColorModel = color"
+        class="size-7 overflow-hidden rounded-lg border border-neutral-300/50"
+        :class="{ 'bg-neutral-200/50': color === '', 'transparent-sprite-xs': color !== '' && (primaryCanTransparent || secondaryCanTransparent) }"
         :disabled="!color"
-        :style="{ backgroundColor: color === '' ? '' : color }"
-      ></button>
+      >
+        <div class="h-full w-full" :style="{ backgroundColor: color === '' ? '' : primaryCanTransparent || secondaryCanTransparent ? color : color.slice(0, 7) }"></div>
+      </div>
     </div>
   </GuiMenu>
 
-  <ColorPicker v-if="pickingColor" v-model="singleColorModel" :editing-color="pickingColor" @close="pickingColor = undefined" />
+  <ColorPicker v-if="pickingColor === 'primary'" v-model="primaryColorModel" :allow-transparency="primaryCanTransparent" @close="pickingColor = undefined" />
+  <ColorPicker v-else-if="pickingColor === 'secondary'" v-model="secondaryColorModel" :allow-transparency="secondaryCanTransparent" @close="pickingColor = undefined" />
 </template>
 
 <script setup lang="ts">
 const props = defineProps<{
-  /** show only 1 color (if true, use v-model to model the hex code) */
+  /** only show 1 color */
   singleColor?: boolean;
-  /** tooltip for primary color */
+  /** tooltip for primary color, gets added to `${primaryTooltip} Color` */
   primaryTooltip?: string;
-  /** tooltip for secondary color */
+  primaryCanTransparent?: boolean;
+  /** tooltip for secondary color, gets added to `${secondaryTooltip} Color` */
   secondaryTooltip?: string;
+  secondaryCanTransparent?: boolean;
 }>();
 
-const singleColorModel = defineModel<string>();
+const primaryColorModel = defineModel<string>("primary");
+const secondaryColorModel = defineModel<string>("secondary");
 
 const toolStore = useToolStore();
-const { primaryColor, secondaryColor, recentColors } = storeToRefs(toolStore);
+const { recentColors } = storeToRefs(toolStore);
 
-const pickingColor = ref<"primary" | "secondary" | "other">();
+const pickingColor = ref<"primary" | "secondary">();
 
-function openColorPicker(color: "primary" | "secondary" | "other") {
+function openColorPicker(color: "primary" | "secondary") {
   if (pickingColor.value) return;
+  console.log(primaryColorModel.value, secondaryColorModel.value);
   pickingColor.value = color;
 }
 
 function swapColors() {
   if (pickingColor.value) return;
 
-  const temp = primaryColor.value;
-  primaryColor.value = secondaryColor.value;
-  secondaryColor.value = temp;
+  const temp = primaryColorModel.value;
+  primaryColorModel.value = secondaryColorModel.value;
+  secondaryColorModel.value = temp;
 }
 </script>
 
