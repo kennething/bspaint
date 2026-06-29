@@ -83,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+// BUG: copy to clipboard doesnt work in tauri
 const emit = defineEmits<{
   close: [void];
 }>();

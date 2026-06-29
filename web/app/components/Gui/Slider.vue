@@ -19,23 +19,27 @@
           'du-tooltip-right': buttonTooltipDirection === 'right'
         }"
       >
-        <img class="w-full p-1" :src="image" aria-hidden="true" />
+        <img class="size-7 p-1" :src="image" aria-hidden="true" />
       </button>
     </div>
 
-    <label :for="`slider-${nameId}`" class="sr-only">{{ name }}</label>
-    <input
-      :id="`slider-${nameId}`"
-      class="slider-input du-tooltip h-1 w-full appearance-none rounded-full bg-neutral-200/80 outline-none"
+    <div
+      class="du-tooltip flex items-center justify-center"
       :class="{ 'du-tooltip-bottom': !tooltipPosition || tooltipPosition === 'bottom' }"
-      type="range"
       :data-tip="tooltipFormat ? tooltipFormat(model!) : model?.toFixed(2)"
-      :min="isSkewed ? 0 : min"
-      :max="isSkewed ? 100 : max"
-      :step="step"
-      v-model.number="tempModel"
-      @change="emit('on-change')"
-    />
+    >
+      <label :for="`slider-${nameId}`" class="sr-only">{{ name }}</label>
+      <input
+        :id="`slider-${nameId}`"
+        class="slider-input h-1 w-full appearance-none rounded-full bg-neutral-200/80 outline-none"
+        type="range"
+        :min="isSkewed ? 0 : min"
+        :max="isSkewed ? 100 : max"
+        :step="step"
+        v-model.number="tempModel"
+        @change="emit('on-change')"
+      />
+    </div>
   </GuiMenu>
 </template>
 

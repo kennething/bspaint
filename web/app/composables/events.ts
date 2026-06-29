@@ -154,7 +154,7 @@ export function useSetupMouseDown() {
       if (pixel.some((value) => value === undefined)) return console.warn("setupMouseDown eyedropper some pixel data missing");
 
       const hex = rgbToHex(pixel[0]!, pixel[1]!, pixel[2]!);
-      toolStore.setColor(isLeftClick ? "primary" : "secondary", hex);
+      toolStore.setColor(isLeftClick ? "primary" : "secondary", hex + percentToHex((pixel[3]! / 255) * 100));
       useSetTool("brush");
     } // eyedropper
 
@@ -193,7 +193,7 @@ export function useSetupMouseUp() {
   if (!canvas.value) return console.warn("setupMouseUp no fabricCanvas");
 
   const toolStore = useToolStore();
-  const { isCreatingShape, createShapeStartPos, strokeWidth, cornerRadius, selectedShape } = storeToRefs(toolStore);
+  const { isCreatingShape } = storeToRefs(toolStore);
 
   canvas.value.on("mouse:up", () => {
     if (!canvas.value) return console.warn("setupMouseUp no fabricCanvas");

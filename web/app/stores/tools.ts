@@ -1,6 +1,6 @@
 import { FabricObject } from "fabric";
 
-export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select" | "shape"; // TODO: fill, rectangle? circle? -shapes
+export type Tool = "brush" | "fill" | "eyedropper" | "text" | "select" | "shape";
 export type ShapeType = "rectangle" | "circle" | "triangle";
 
 export const useToolStore = defineStore("toolStore", () => {

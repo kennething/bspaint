@@ -1,6 +1,6 @@
 <template>
   <Transition>
-    <div v-show="showTransition" class="solid-ass" @click.right.prevent>
+    <div v-show="showTransition" class="solid-ass select-none" @click.right.prevent>
       <slot></slot>
     </div>
   </Transition>

@@ -1,5 +1,5 @@
 <template>
-  <div class="transparent-sprite relative flex h-screen w-screen items-center justify-center">
+  <div class="transparent-sprite relative flex h-screen w-screen items-center justify-center select-none">
     <canvas ref="canvas" class="h-full w-full"></canvas>
   </div>
 </template>
