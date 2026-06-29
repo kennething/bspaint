@@ -83,7 +83,9 @@
 </template>
 
 <script setup lang="ts">
-// BUG: copy to clipboard doesnt work in tauri
+// TODO: create a file format
+// TODO: copy to clipboard doesnt work in tauri
+// TODO: select directory to save to
 const emit = defineEmits<{
   close: [void];
 }>();
