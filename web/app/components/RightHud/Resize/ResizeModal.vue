@@ -4,9 +4,9 @@
       <GuiInput name="Width" v-model="newSize.width" model-type="number" @on-change="validateDimensions" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
       <GuiInput name="Height" v-model="newSize.height" model-type="number" @on-change="validateDimensions" :min="config.public.minCanvasSize" :max="config.public.maxCanvasSize" />
 
-      <div class="mt-4 flex w-full items-center justify-around">
-        <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
-        <GuiButtonSingle class="border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!" inner-class-override="hover:bg-blue-200/50!" image="/icons/check.svg" label="Confirm" @clicked="save" />
+      <div class="mt-4 flex w-full items-center justify-around gap-2">
+        <GuiCancelButton @clicked="emit('close')" />
+        <GuiConfirmButton @clicked="save" />
       </div>
     </GuiMenu>
   </Teleport>

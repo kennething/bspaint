@@ -1,6 +1,6 @@
 <template>
   <Transition>
-    <div v-show="showTransition" class="solid-ass select-none" @click.right.prevent>
+    <div v-show="showTransition" class="select-none" :class="isMac ? 'solid-ass' : 'regular-ass'" @click.right.prevent>
       <slot></slot>
     </div>
   </Transition>
@@ -11,6 +11,9 @@
 const props = defineProps<{ doTransition?: boolean }>();
 const showTransition = ref(!props.doTransition);
 
+const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
+
 onMounted(() => (showTransition.value = true));
 </script>
 
@@ -19,6 +22,9 @@ onMounted(() => (showTransition.value = true));
 
 .solid-ass {
   @apply border-sky-base/90 bg-sky-base/70 rounded-xl border-2 shadow shadow-neutral-200/60 backdrop-blur-md;
+}
+.regular-ass {
+  @apply bg-sky-base border border-neutral-300;
 }
 
 @keyframes expand {

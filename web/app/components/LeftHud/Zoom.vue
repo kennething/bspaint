@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-center gap-2 rounded-full">
+  <div class="flex items-center justify-center" :class="{ 'gap-2 rounded-full': isMac }">
     <GuiSlider
       class="z-11"
       name="Zoom"
@@ -13,7 +13,7 @@
       v-model="tempZoom"
       :tooltip-format="(val) => `${val.toFixed(2)}x`"
     />
-    <GuiButtonSingle image="/icons/zoom-out.svg" label="Reset Zoom" tooltip-direction="top" @clicked="useResetZoom" />
+    <GuiButtonSingle :class="{ 'border-x-0!': !isMac }" image="/icons/zoom-out.svg" label="Reset Zoom" tooltip-direction="top" @clicked="useResetZoom" />
   </div>
 </template>
 

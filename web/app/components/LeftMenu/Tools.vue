@@ -1,5 +1,5 @@
 <template>
-  <GuiButtonGroup>
+  <GuiButtonGroup :class="{ 'border-r-0! border-b-0!': !isMac }">
     <GuiInnerButton
       v-for="(tool, index) in tools"
       :key="tool"
@@ -15,6 +15,9 @@
 <script setup lang="ts">
 const toolStore = useToolStore();
 const { activeTool } = storeToRefs(toolStore);
+
+const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
 
 const tools = ["select", "brush", "text", "eyedropper", "shape"] as const satisfies Tool[];
 </script>

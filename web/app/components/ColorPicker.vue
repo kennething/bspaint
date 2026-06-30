@@ -42,14 +42,8 @@
         </div>
 
         <div class="mt-10 flex w-full items-center justify-around">
-          <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
-          <GuiButtonSingle
-            class="border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!"
-            inner-class-override="hover:bg-blue-200/50!"
-            image="/icons/check.svg"
-            label="Confirm"
-            @clicked="save"
-          />
+          <GuiCancelButton @clicked="emit('close')" />
+          <GuiConfirmButton @clicked="save" />
         </div>
       </div>
     </GuiMenu>

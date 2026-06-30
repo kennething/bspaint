@@ -1,5 +1,5 @@
 <template>
-  <GuiMenu class="flex w-full items-center justify-center gap-1 rounded-full! px-1.5">
+  <GuiMenu class="flex w-full items-center justify-center gap-1 px-1.5" :class="{ 'rounded-full!': isMac }">
     <div class="flex w-9 items-center justify-center">
       <div v-if="showManualInput" class="flex items-center justify-center">
         <label :for="`number-${nameId}`" class="sr-only">{{ name }}</label>
@@ -31,7 +31,8 @@
       <label :for="`slider-${nameId}`" class="sr-only">{{ name }}</label>
       <input
         :id="`slider-${nameId}`"
-        class="slider-input h-1 w-full appearance-none rounded-full bg-neutral-200/80 outline-none"
+        class="h-1 w-full appearance-none rounded-full outline-none"
+        :class="isMac ? 'slider-input-mac bg-neutral-200/80' : 'slider-input bg-neutral-300'"
         type="range"
         :min="isSkewed ? 0 : min"
         :max="isSkewed ? 100 : max"
@@ -65,6 +66,7 @@ const emit = defineEmits<{
 const model = defineModel<number>();
 
 const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
 
 const tempModel = ref(props.isSkewed ? unskew(model.value!) : model.value);
 const skipSkew = ref(false);
@@ -137,10 +139,14 @@ function inputOff() {
 <style scoped>
 @reference "../../assets/main.css";
 
-.slider-input::-webkit-slider-thumb {
+.slider-input-mac::-webkit-slider-thumb {
   @apply h-4 w-5 cursor-pointer appearance-none rounded-full border border-neutral-300/50 bg-neutral-200/50 shadow shadow-neutral-300/50 backdrop-blur-md transition-transform;
 }
-.slider-input::-webkit-slider-thumb:hover {
+.slider-input-mac::-webkit-slider-thumb:hover {
   @apply scale-125 border-neutral-400/50! bg-neutral-300/50!;
+}
+
+.slider-input::-webkit-slider-thumb {
+  @apply h-5 w-4 cursor-pointer appearance-none rounded border border-neutral-300 bg-blue-500;
 }
 </style>

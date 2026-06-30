@@ -9,10 +9,15 @@
             <GuiMenu
               v-for="option in fileOrCopyOptions"
               :key="option"
-              class="flex w-full items-center justify-center rounded-full! backdrop-blur-none!"
-              :class="options.fileOrCopy === option ? 'border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70! hover:bg-blue-200/50!' : 'hover:bg-neutral-200/35!'"
+              class="flex w-full items-center justify-center"
+              :class="{
+                'rounded-full! backdrop-blur-none!': isMac,
+                'border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70! hover:bg-blue-200/50!': isMac && options.fileOrCopy === option,
+                'border-blue-300! bg-sky-100! transition duration-500 hover:bg-sky-200/50!': !isMac && options.fileOrCopy === option,
+                'hover:bg-neutral-200/35!': options.fileOrCopy !== option
+              }"
             >
-              <button class="h-full w-full rounded-full px-6 py-2 text-xl font-light" @click="options.fileOrCopy = option">
+              <button class="h-full w-full px-6 py-2 text-xl font-light" :class="{ 'rounded-full': isMac }" @click="options.fileOrCopy = option">
                 {{ option === "file" ? "Save as file" : "Copy to clipboard" }}
               </button>
             </GuiMenu>
@@ -22,14 +27,17 @@
             <GuiMenu
               v-for="option in formatOptions"
               :key="option"
-              class="flex w-1/3! grow items-center justify-center rounded-full! backdrop-blur-none!"
-              :class="
+              class="flex w-1/3! grow items-center justify-center"
+              :class="[
+                { 'rounded-full! backdrop-blur-none!': isMac },
                 !options.fileOrCopy || (options.fileOrCopy === 'copy' && ['jpg', 'webp'].includes(option))
                   ? 'cursor-not-allowed opacity-30'
                   : options.format === option
-                    ? 'border-blue-100/90! bg-blue-100/70! hover:bg-blue-200/50!'
+                    ? isMac
+                      ? 'border-blue-100/90! bg-blue-100/70! hover:bg-blue-200/50!'
+                      : 'border-blue-300! bg-sky-100! transition duration-500 hover:bg-sky-200/50!'
                     : 'hover:bg-neutral-200/35!'
-              "
+              ]"
             >
               <button
                 class="h-full w-full rounded-full py-2 text-xl font-light"
@@ -40,7 +48,11 @@
               </button>
             </GuiMenu>
 
-            <GuiMenu v-if="options.format === 'jpg' && hasTransparency" class="flex items-center justify-center rounded-full! border-red-200/70! bg-red-100/50! px-6!">
+            <GuiMenu
+              v-if="options.format === 'jpg' && hasTransparency"
+              class="flex items-center justify-center"
+              :class="isMac ? 'rounded-full! border-red-200/70! bg-red-100/50! px-6!' : 'border-red-300! bg-red-100! px-2!'"
+            >
               <img class="size-6" src="/icons/warning.svg" aria-hidden="true" />
               <p class="text-center">Background and layer transparency will be lost when converting to JPG</p>
             </GuiMenu>
@@ -48,7 +60,10 @@
 
           <div class="flex w-full items-center justify-center gap-1 pr-4" v-if="options.fileOrCopy === 'file'">
             <label for="file-name" class="sr-only">File Name</label>
-            <GuiMenu class="grow rounded-full! focus-within:border-blue-300/80! focus-within:bg-blue-100/20!">
+            <GuiMenu
+              class="grow"
+              :class="isMac ? 'rounded-full! focus-within:border-blue-300/80! focus-within:bg-blue-100/20!' : 'transition duration-500 focus-within:border-blue-300! focus-within:bg-sky-100!'"
+            >
               <input
                 id="file-name"
                 type="text"
@@ -67,15 +82,8 @@
         </div>
 
         <div class="flex w-full items-center justify-end gap-2">
-          <GuiButtonSingle image="/icons/close.svg" label="Cancel" @clicked="emit('close')" />
-          <GuiButtonSingle
-            :class="{ 'border-blue-100/90! bg-blue-100/70! hover:border-blue-200/70!': canSubmit }"
-            :inner-class-override="canSubmit ? 'hover:bg-blue-200/50!' : ''"
-            image="/icons/check.svg"
-            label="Confirm"
-            :is-disabled="!canSubmit"
-            @clicked="save"
-          />
+          <GuiCancelButton @clicked="emit('close')" />
+          <GuiConfirmButton :is-disabled="!canSubmit" @clicked="save" />
         </div>
       </div>
     </GuiMenu>
@@ -94,9 +102,15 @@ const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas } = storeToRefs(canvasStore);
 const toolStore = useToolStore();
 const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
 
 const canvasPreview = ref<string>();
-const hasTransparency = computed(() => toolStore.backgroundColor.slice(7, 9) !== "FF" || canvasStore.layers.some((layer) => layer.opacity !== 100));
+const hasTransparency = computed(
+  () =>
+    toolStore.backgroundColor.slice(7, 9) !== "FF" ||
+    canvasStore.layers.some((layer) => layer.opacity !== 100) ||
+    canvasStore.fabricCanvas?.getObjects().some((obj) => !obj.excludeFromExport && obj.fill && !["", "FF"].includes(obj.fill.toString().slice(7, 9)))
+);
 
 onBeforeMount(async () => {
   if (!canvas.value) return console.warn("handleResize no fabricCanvas");

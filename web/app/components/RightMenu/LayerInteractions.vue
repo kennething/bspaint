@@ -1,15 +1,16 @@
 <template>
-  <div class="flex w-full items-center justify-around gap-2">
-    <GuiButtonGroup class="du-tooltip du-tooltip-bottom" :data-tip="`Toggle Layer Lock (${useGetKeybindString('Toggle Layer Lock')})`">
+  <div class="flex w-full items-center justify-between" :class="{ 'gap-2': isMac }">
+    <GuiButtonGroup class="du-tooltip du-tooltip-bottom" :class="{ 'border-b-0!': !isMac }" :data-tip="`Toggle Layer Lock (${useGetKeybindString('Toggle Layer Lock')})`">
       <GuiInnerButton image="/icons/lock.svg" label="Lock the current layer" :is-disabled="activeLayer.isLocked" @clicked="canvasStore.toggleLock(activeLayer, true)" />
       <GuiInnerButton image="/icons/unlock.svg" label="Unlock the current layer" :is-disabled="!activeLayer.isLocked" @clicked="canvasStore.toggleLock(activeLayer, false)" />
     </GuiButtonGroup>
 
-    <GuiButtonSingle image="/icons/delete.svg" label="Delete Layer" tooltip-direction="bottom" @clicked="canvasStore.deleteLayer(activeLayer)" />
+    <GuiButtonSingle :class="{ 'border-x-0! border-b-0!': !isMac }" image="/icons/delete.svg" label="Delete Layer" tooltip-direction="bottom" @clicked="canvasStore.deleteLayer(activeLayer)" />
 
     <GuiSlider
       name="Layer Opacity"
       image="/icons/eye.svg"
+      :class="{ 'border-b-0!': !isMac }"
       :custom-button-tooltip="`Layer Opacity (${isMac ? modifierKeySet.meta : modifierKeySet.control} + ${specialKeys.arrowup}/${specialKeys.arrowdown})`"
       button-tooltip-direction="bottom"
       :min="0"

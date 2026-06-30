@@ -1,33 +1,41 @@
 <template>
-  <GuiMenu class="flex w-full flex-col items-center justify-center gap-6 p-6">
+  <GuiMenu class="flex w-full flex-col items-center justify-center" :class="isMac ? 'gap-6 p-6' : 'gap-2 px-6 py-2'">
     <div class="flex w-full items-center" :class="singleColor ? 'justify-center' : 'justify-between'">
-      <div
-        role="button"
-        @click="openColorPicker('primary')"
-        :disabled="!!pickingColor"
-        class="du-tooltip h-12 w-18 overflow-hidden rounded-xl border border-neutral-400/50"
-        :class="{ 'transparent-sprite-sm': primaryCanTransparent }"
-        :data-tip="`${primaryTooltip ? primaryTooltip : 'Primary'} Color`"
-      >
-        <div class="h-full w-full" :style="{ backgroundColor: primaryCanTransparent ? primaryColorModel : primaryColorModel?.slice(0, 7) }"></div>
+      <div class="du-tooltip" :data-tip="`${primaryTooltip ? primaryTooltip : 'Primary'} Color`">
+        <div
+          role="button"
+          @click="openColorPicker('primary')"
+          :disabled="!!pickingColor"
+          class="h-12 w-18 overflow-hidden border"
+          :class="[{ 'transparent-sprite-sm': primaryCanTransparent, 'cursor-not-allowed! active:scale-100!': pickingColor }, isMac ? 'rounded-xl border-neutral-400/50' : 'border-neutral-400']"
+        >
+          <div class="h-full w-full" :style="{ backgroundColor: primaryCanTransparent ? primaryColorModel : primaryColorModel?.slice(0, 7) }"></div>
+        </div>
       </div>
 
-      <GuiMenu v-if="!singleColor" class="flex items-center justify-center rounded-full! px-0.5 backdrop-blur-none!">
-        <button @click="swapColors" :disabled="!!pickingColor" class="du-tooltip w-full rounded-full px-2 py-1" data-tip="Swap Colors" :class="pickingColor ? 'opacity-30' : 'hover:bg-neutral-200/35'">
+      <GuiMenu v-if="!singleColor" class="flex items-center justify-center" :class="isMac ? 'rounded-full! px-0.5 backdrop-blur-none!' : 'border-none!'">
+        <button
+          @click="swapColors"
+          :disabled="!!pickingColor"
+          class="du-tooltip w-full rounded-full px-2 py-1"
+          data-tip="Swap Colors"
+          :class="[{ 'cursor-not-allowed! active:scale-100!': pickingColor }, pickingColor ? 'opacity-30' : isMac ? 'hover:bg-neutral-200/35' : '']"
+        >
           <img class="size-5" src="/icons/swap.svg" aria-hidden="true" />
         </button>
       </GuiMenu>
 
-      <div
-        role="button"
-        v-if="!singleColor"
-        @click="openColorPicker('secondary')"
-        :disabled="!!pickingColor"
-        class="du-tooltip h-12 w-18 overflow-hidden rounded-xl border border-neutral-400/50"
-        :class="{ 'transparent-sprite-sm': secondaryCanTransparent }"
-        :data-tip="`${secondaryTooltip ? secondaryTooltip : 'Secondary'} Color`"
-      >
-        <div class="h-full w-full" :style="{ backgroundColor: secondaryCanTransparent ? secondaryColorModel : secondaryColorModel?.slice(0, 7) }"></div>
+      <div class="du-tooltip" :data-tip="`${secondaryTooltip ? secondaryTooltip : 'Secondary'} Color`">
+        <div
+          role="button"
+          v-if="!singleColor"
+          @click="openColorPicker('secondary')"
+          :disabled="!!pickingColor"
+          class="h-12 w-18 overflow-hidden border"
+          :class="[{ 'transparent-sprite-sm': secondaryCanTransparent, 'cursor-not-allowed! active:scale-100!': pickingColor }, isMac ? 'rounded-xl border-neutral-400/50' : 'border-neutral-400']"
+        >
+          <div class="h-full w-full" :style="{ backgroundColor: secondaryCanTransparent ? secondaryColorModel : secondaryColorModel?.slice(0, 7) }"></div>
+        </div>
       </div>
     </div>
 
@@ -38,8 +46,11 @@
         role="button"
         @click.left="primaryColorModel = color"
         @click.right.prevent="secondaryColorModel = color"
-        class="size-7 overflow-hidden rounded-lg border border-neutral-300/50"
-        :class="{ 'bg-neutral-200/50': color === '', 'transparent-sprite-xs': color !== '' && (primaryCanTransparent || secondaryCanTransparent) }"
+        class="size-7 overflow-hidden border"
+        :class="[
+          { 'cursor-not-allowed! active:scale-100!': !color, 'bg-neutral-200/50': color === '', 'transparent-sprite-xs': color !== '' && (primaryCanTransparent || secondaryCanTransparent) },
+          isMac ? 'rounded-lg border-neutral-300/50' : 'border-neutral-300'
+        ]"
         :disabled="!color"
       >
         <div class="h-full w-full" :style="{ backgroundColor: color === '' ? '' : primaryCanTransparent || secondaryCanTransparent ? color : color.slice(0, 7) }"></div>
@@ -68,6 +79,8 @@ const secondaryColorModel = defineModel<string>("secondary");
 
 const toolStore = useToolStore();
 const { recentColors } = storeToRefs(toolStore);
+const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
 
 const pickingColor = ref<"primary" | "secondary">();
 

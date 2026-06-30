@@ -1,12 +1,13 @@
 <template>
-  <div v-if="activeTool === 'select' && selectedObject" class="flex flex-col items-center justify-center gap-2">
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
+  <div v-if="activeTool === 'select' && selectedObject" class="flex flex-col items-center justify-center" :class="{ 'gap-2': isMac }">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-y-0! p-2'">
       <GuiInput v-model="selectWidth" name="Width" model-type="number" inner-class="w-full" />
       <GuiInput v-model="selectHeight" name="Height" model-type="number" inner-class="w-full" />
       <GuiInput v-model="selectX" name="X-Position" model-type="number" inner-class="w-full" />
       <GuiInput v-model="selectY" name="Y-Position" model-type="number" inner-class="w-full" />
       <GuiSlider
         v-model="selectScaleX"
+        :class="{ 'border-none!': !isMac }"
         is-skewed
         name="X-Scale"
         image="/icons/scale-x.svg"
@@ -15,9 +16,11 @@
         tooltip-position="top"
         :min="0.01"
         :max="100"
+        @on-change="() => canvasStore.saveHistory()"
       />
       <GuiSlider
         v-model="selectScaleY"
+        :class="{ 'border-none!': !isMac }"
         is-skewed
         name="Y-Scale"
         image="/icons/scale-y.svg"
@@ -26,18 +29,30 @@
         tooltip-position="top"
         :min="0.01"
         :max="100"
+        @on-change="() => canvasStore.saveHistory()"
       />
-      <GuiSlider v-model="selectAngle" name="Rotation" image="/icons/rotation.svg" :tooltip-format="(value) => `${value}°`" button-tooltip-direction="top" tooltip-position="top" :min="0" :max="360" />
+      <GuiSlider
+        v-model="selectAngle"
+        :class="{ 'border-none!': !isMac }"
+        name="Rotation"
+        image="/icons/rotation.svg"
+        :tooltip-format="(value) => `${value}°`"
+        button-tooltip-direction="top"
+        tooltip-position="top"
+        :min="0"
+        :max="360"
+        @on-change="() => canvasStore.saveHistory()"
+      />
     </GuiMenu>
 
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6" v-if="selectedObjectIsPath">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-b-0! p-2'" v-if="selectedObjectIsPath">
       <LeftMenuModifiersBrushSize v-model="selectBrushSize" />
     </GuiMenu>
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6" v-else-if="selectedObjectIsText">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-b-0! p-2'" v-else-if="selectedObjectIsText">
       <LeftMenuModifiersFontSize v-model="selectFontSize" />
       <LeftMenuModifiersFontFamily v-model="selectFontFamily" />
     </GuiMenu>
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6" v-else-if="selectedObjectIsShape">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-b-0! p-2'" v-else-if="selectedObjectIsShape">
       <LeftMenuModifiersStrokeWidth v-model="selectStrokeWidth" />
       <LeftMenuModifiersCornerRadius v-if="!!(selectedObject instanceof Rect)" v-model="selectCornerRadius" />
     </GuiMenu>
@@ -54,15 +69,15 @@
     <LeftMenuModifiersColors v-else single-color v-model:primary="selectColor" />
   </div>
 
-  <div v-else-if="activeTool === 'brush'" class="flex flex-col items-center justify-center gap-2">
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
+  <div v-else-if="activeTool === 'brush'" class="flex flex-col items-center justify-center" :class="{ 'gap-2': isMac }">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-y-0! p-2'">
       <LeftMenuModifiersBrushSize v-model="brushSize" />
     </GuiMenu>
     <LeftMenuModifiersColors v-model:primary="primaryColor" v-model:secondary="secondaryColor" />
   </div>
 
-  <div v-else-if="activeTool === 'text'" class="flex flex-col items-center justify-center gap-2">
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
+  <div v-else-if="activeTool === 'text'" class="flex flex-col items-center justify-center" :class="{ 'gap-2': isMac }">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-y-0! p-2'">
       <LeftMenuModifiersFontSize v-model="fontSize" />
       <LeftMenuModifiersFontFamily v-model="fontFamily" />
     </GuiMenu>
@@ -71,12 +86,12 @@
 
   <LeftMenuModifiersColors v-else-if="activeTool === 'eyedropper'" v-model:primary="primaryColor" v-model:secondary="secondaryColor" />
 
-  <div v-else-if="activeTool === 'shape'" class="flex flex-col items-center justify-center gap-2">
-    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2 p-6">
-      <GuiButtonGroup class="w-full!">
-        <GuiInnerButton class="grow" image="/icons/square.svg" label="Square" @clicked="selectedShape = 'rectangle'" :is-active="selectedShape === 'rectangle'" tooltip-direction="top" />
-        <GuiInnerButton class="grow" image="/icons/circle.svg" label="Circle" @clicked="selectedShape = 'circle'" :is-active="selectedShape === 'circle'" tooltip-direction="top" />
-        <GuiInnerButton class="grow" image="/icons/triangle.svg" label="Triangle" @clicked="selectedShape = 'triangle'" :is-active="selectedShape === 'triangle'" tooltip-direction="top" />
+  <div v-else-if="activeTool === 'shape'" class="flex flex-col items-center justify-center" :class="{ 'gap-2': isMac }">
+    <GuiMenu class="flex w-full flex-col items-center justify-center gap-2" :class="isMac ? 'p-6' : 'border-y-0! p-2'">
+      <GuiButtonGroup :class="isMac ? 'w-full!' : 'w-50! border-none!'">
+        <GuiInnerButton class="grow" image="/icons/square.svg" label="Square" @clicked="selectedShape = 'rectangle'" :is-active="selectedShape === 'rectangle'" tooltip-direction="bottom" />
+        <GuiInnerButton class="grow" image="/icons/circle.svg" label="Circle" @clicked="selectedShape = 'circle'" :is-active="selectedShape === 'circle'" tooltip-direction="bottom" />
+        <GuiInnerButton class="grow" image="/icons/triangle.svg" label="Triangle" @clicked="selectedShape = 'triangle'" :is-active="selectedShape === 'triangle'" tooltip-direction="bottom" />
       </GuiButtonGroup>
       <LeftMenuModifiersStrokeWidth v-model="strokeWidth" />
       <LeftMenuModifiersCornerRadius v-if="selectedShape === 'rectangle'" v-model="cornerRadius" />
@@ -91,9 +106,13 @@ import { Ellipse, IText, Path, Rect, Triangle } from "fabric";
 // TODO: change properties of all selected objects instead of just 1
 const canvasStore = useCanvasStore();
 const { fabricCanvas: canvas } = storeToRefs(canvasStore);
+
 const toolStore = useToolStore();
 const { activeTool, primaryColor, secondaryColor, brushSize, fontFamily, fontSize, selectedObject, stopWatchers, selectedObjectChangedEvent, strokeWidth, cornerRadius, selectedShape } =
   storeToRefs(toolStore);
+
+const userStore = useUserStore();
+const { isMac } = storeToRefs(userStore);
 
 watch(brushSize, () => useBrushPreview());
 watch(fontSize, () => useTextPreview());
@@ -176,12 +195,14 @@ watch(selectWidth, (newWidth) => {
   if (selectedObject.value) selectedObject.value.set({ width: newWidth });
   selectedObject.value?.setCoords();
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectHeight, (newHeight) => {
   if (newHeight === selectedObject.value!.height) return;
   if (selectedObject.value) selectedObject.value.set({ height: newHeight });
   selectedObject.value?.setCoords();
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectScaleX, (newScaleX) => {
   if (newScaleX === selectedObject.value!.scaleX) return;
@@ -200,12 +221,14 @@ watch(selectX, (newX) => {
   if (selectedObject.value) selectedObject.value.set({ left: newX });
   selectedObject.value?.setCoords();
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectY, (newY) => {
   if (newY === selectedObject.value!.top) return;
   if (selectedObject.value) selectedObject.value.set({ top: newY });
   selectedObject.value?.setCoords();
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectAngle, (newAngle) => {
   if (newAngle === selectedObject.value!.angle) return;
@@ -221,10 +244,12 @@ watch(selectColor, (newColor) => {
     selectedObject.value!.set({ fill: newColor });
   }
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectSecondaryColor, (newColor) => {
   if (selectedObjectIsShape.value) selectedObject.value!.set({ stroke: newColor });
   canvas.value?.requestRenderAll();
+  canvasStore.saveHistory();
 });
 watch(selectBrushSize, (newSize) => {
   if (selectedObjectIsPath.value) selectedObject.value!.set({ strokeWidth: newSize });
