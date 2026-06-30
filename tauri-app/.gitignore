@@ -5,6 +5,8 @@ app/components/Canvas.vue
 app/components/ColorPicker.vue
 app/components/Gui/ButtonGroup.vue
 app/components/Gui/ButtonSingle.vue
+app/components/Gui/CancelButton.vue
+app/components/Gui/ConfirmButton.vue
 app/components/Gui/InnerButton.vue
 app/components/Gui/Input.vue
 app/components/Gui/Menu.vue
@@ -39,7 +41,7 @@ app/composables/events.ts
 app/composables/history.ts
 app/composables/keybinds.ts
 app/composables/tools.ts
-app/middleware/os.global.ts
+app/middleware/01.os.global.ts
 app/pages/draw.client.vue
 app/plugins/no-drag-images.client.ts
 app/stores/canvas.ts

@@ -24,8 +24,18 @@ const { zoomLevel } = storeToRefs(toolStore);
 
 const config = useRuntimeConfig();
 
-onMounted(() => document.addEventListener("keydown", handleKeyDown));
-onUnmounted(() => document.removeEventListener("keydown", handleKeyDown));
+onMounted(() => {
+  document.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("beforeunload", stopUnload);
+});
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("beforeunload", stopUnload);
+});
+
+function stopUnload(event: BeforeUnloadEvent) {
+  event.preventDefault();
+}
 
 async function handleKeyDown(event: KeyboardEvent) {
   if (disableKeybinds.value) return;

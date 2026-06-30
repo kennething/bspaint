@@ -9,6 +9,8 @@
 </template>
 
 <script setup lang="ts">
+// TODO: add settings modal
+
 const userStore = useUserStore();
 const { isMac } = storeToRefs(userStore);
 </script>

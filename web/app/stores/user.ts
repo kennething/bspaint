@@ -1,3 +1,9 @@
+import * as z from "zod/mini";
+
+export const SettingsSchema = z.object({
+  horizontalScrollAssist: z.boolean()
+});
+
 export const useUserStore = defineStore("userStore", () => {
   const isMac = ref(false);
   const modifierKeySet = ref<(typeof modifierKeys)["mac"] | (typeof modifierKeys)["windows"]>(modifierKeys.windows);
@@ -10,5 +16,9 @@ export const useUserStore = defineStore("userStore", () => {
     disableKeybinds.value = false;
   }
 
-  return { isMac, disableKeybinds, modifierKeySet, stopKeybinds, restartKeybinds };
+  const settings = ref<z.infer<typeof SettingsSchema>>({
+    horizontalScrollAssist: true
+  });
+
+  return { isMac, disableKeybinds, modifierKeySet, stopKeybinds, restartKeybinds, settings };
 });

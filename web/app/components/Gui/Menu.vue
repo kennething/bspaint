@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-// TODO: windows styles
+// TODO: dark mode
 const props = defineProps<{ doTransition?: boolean }>();
 const showTransition = ref(!props.doTransition);
 

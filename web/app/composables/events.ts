@@ -38,9 +38,8 @@ export function useSetupScroll() {
     const currentTransform = canvas.value.viewportTransform;
     if (!currentTransform) return console.warn("setupScroll no viewportTransform");
 
-    // TODO: add settings to toggle ts
-    currentTransform[4] -= event.e.shiftKey ? event.e.deltaY : event.e.deltaX;
-    currentTransform[5] -= event.e.shiftKey ? event.e.deltaX : event.e.deltaY;
+    currentTransform[4] -= event.e.shiftKey && userStore.settings.horizontalScrollAssist ? event.e.deltaY : event.e.deltaX;
+    currentTransform[5] -= event.e.shiftKey && userStore.settings.horizontalScrollAssist ? event.e.deltaX : event.e.deltaY;
     canvas.value.zoomToPoint(new Point(event.e.offsetX, event.e.offsetY), canvas.value.getZoom());
 
     lastMousePosEvent.value = event;
