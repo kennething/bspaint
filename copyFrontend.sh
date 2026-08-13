@@ -14,6 +14,7 @@ EXEMPTION_PHRASE="single"
 EXCLUDE_PATHS=(
   "node_modules"
   ".nuxt"
+  "server"
   "nuxt.config.ts"
   "package.json"
   "package-lock.json"

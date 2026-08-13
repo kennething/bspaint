@@ -16,11 +16,13 @@
         v-for="(layer, index) in layers"
         :key="layer.id"
         class="du-tooltip flex w-full items-center justify-center gap-3 px-3 py-2"
-        :class="[
-          { 'rounded-xl': isMac },
-          isMac && layer.id === activeLayerId ? 'bg-neutral-200/65 hover:bg-neutral-300/50' : 'hover:bg-neutral-200/35',
-          !isMac && layer.id === activeLayerId ? 'bg-neutral-300 hover:bg-neutral-400/50' : 'bg-neutral-300/35 hover:bg-neutral-300/65'
-        ]"
+        :class="{
+          'rounded-xl': isMac,
+          'bg-neutral-200/65 hover:bg-neutral-300/50': isMac && layer.id === activeLayerId,
+          'hover:bg-neutral-200/35': isMac && layer.id !== activeLayerId,
+          'bg-neutral-300 hover:bg-neutral-400/50': !isMac && layer.id === activeLayerId,
+          'bg-neutral-300/35 hover:bg-neutral-300/65': !isMac && layer.id !== activeLayerId
+        }"
         :data-tip="`Layer ${layer.id} (${isMac ? modifierKeySet.control + ' + ' : ''}${modifierKeySet.alt} + ${index + 1})`"
         role="button"
         @click="canvasStore.switchLayer(layer)"

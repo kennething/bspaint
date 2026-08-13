@@ -97,7 +97,10 @@ async function handleKeyDown(event: KeyboardEvent) {
     else if (toolStore.selectedShape === "triangle") toolStore.selectedShape = "rectangle";
   } // shape
   else if (validKeybind.action === "Delete Selected") {
-    canvas.value.getActiveObjects().forEach((obj) => canvas.value?.remove(obj));
+    canvas.value.getActiveObjects().forEach((obj, i, arr) => {
+      if (i !== arr.length - 1) obj.set({ excludeFromExport: true });
+      canvas.value?.remove(obj);
+    });
     canvas.value.discardActiveObject();
   } // delete selected
   else if (validKeybind.action === "Layer Opacity Down") {

@@ -23,6 +23,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
     "daisyui": "^5.5.23",
     "prettier-plugin-tailwindcss": "^0.8.0"
   }

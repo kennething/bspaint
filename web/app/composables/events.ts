@@ -247,7 +247,7 @@ export function useSetupMouseMove() {
 
       const width = event.scenePoint.x - createShapeStartPos.value!.x;
       const height = event.scenePoint.y - createShapeStartPos.value!.y;
-
+      // TODO: doesnt work for quadrant 3
       const left = width >= 0 ? createShapeStartPos.value!.x + width / 2 : event.scenePoint.x + Math.abs(width) / 2;
       const top = width >= 0 ? createShapeStartPos.value!.y + height / 2 : event.scenePoint.y + Math.abs(height) / 2;
 
@@ -340,7 +340,8 @@ export function useHandlePaste(event: ClipboardEvent) {
 
       const img = await FabricImage.fromURL(event.target.result);
       fabricClipboard.value = img;
-      img.set({ layerId: activeLayerId.value });
+      img.set({ layerId: activeLayerId.value, top: img.height / 2, left: img.width / 2 });
+      img.setCoords();
       canvas.value.add(img);
       canvas.value.setActiveObject(img);
       useSetTool("select");

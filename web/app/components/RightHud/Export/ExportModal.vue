@@ -30,7 +30,7 @@
               class="flex w-1/3! grow items-center justify-center"
               :class="[
                 { 'rounded-full! backdrop-blur-none!': isMac },
-                !options.fileOrCopy || (options.fileOrCopy === 'copy' && ['jpg', 'webp'].includes(option))
+                !options.fileOrCopy || (options.fileOrCopy === 'copy' && formatsCantCopy.includes(option))
                   ? 'cursor-not-allowed opacity-30'
                   : options.format === option
                     ? isMac
@@ -118,7 +118,8 @@ onBeforeMount(async () => {
 });
 
 const fileOrCopyOptions = ["file", "copy"] as const;
-const formatOptions = ["svg", "png", "jpg", "webp"] as const;
+const formatOptions = ["bsp", "svg", "png", "jpg", "webp"] as const;
+const formatsCantCopy = ["bsp", "jpg", "webp"];
 const options = reactive({
   fileOrCopy: undefined as (typeof fileOrCopyOptions)[number] | undefined,
   format: undefined as (typeof formatOptions)[number] | undefined,
@@ -127,7 +128,7 @@ const options = reactive({
 watch(
   () => options.fileOrCopy,
   (newVal) => {
-    if (newVal === "copy" && options.format && ["jpg", "webp"].includes(options.format)) options.format = undefined;
+    if (newVal === "copy" && options.format && formatsCantCopy.includes(options.format)) options.format = undefined;
   }
 );
 watch(
@@ -142,7 +143,45 @@ async function save() {
   if (!canSubmit.value) return console.warn("save no canSubmit");
   if (!canvas.value) return console.warn("save no fabricCanvas");
 
-  if (options.format === "svg") {
+  if (options.format === "bsp") {
+    console.log(canvas.value.toDatalessJSON(["id", "excludeFromExport"]));
+    const file = await $fetch("/api/compressFile", {
+      method: "POST",
+      body: { canvasJson: canvas.value.toDatalessJSON(["id", "excludeFromExport"]) },
+      responseType: "blob"
+    });
+
+    if (options.fileOrCopy === "copy") return;
+    else {
+      if ("showSaveFilePicker" in window) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: `${Date.now()}.bsp`,
+          startIn: "downloads",
+          types: [
+            {
+              description: "BS Paint Files",
+              accept: {
+                "application/octet-stream": [".bsp"]
+              }
+            }
+          ]
+        });
+
+        const writable = await handle.createWritable();
+        await writable.write(file);
+        await writable.close();
+        return;
+      }
+      const url = URL.createObjectURL(file.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${options.fileName}.bsp`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } // file
+  } // bsp
+  else if (options.format === "svg") {
     const svgString = await useCanvasToImage("svg");
     const svgFile = new File([svgString], `${options.fileOrCopy === "file" ? options.fileName : "image"}.svg`, { type: "image/svg+xml" });
 
@@ -162,7 +201,8 @@ async function save() {
     if (options.fileOrCopy === "copy") {
       const blob = await useCanvasToImage(options.format!, true);
       await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-    } else {
+    } // copy
+    else {
       const url = await useCanvasToImage(options.format!);
       const link = document.createElement("a");
       link.href = url;
