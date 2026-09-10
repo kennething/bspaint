@@ -1,7 +1,7 @@
 <template>
   <NuxtPage />
 
-  <input class="fixed top-1/2 left-1/2 z-100 -translate-x-1/2 -translate-y-1/2" type="file" @change="test" />
+  <!-- <input class="fixed top-1/2 left-1/2 z-100 -translate-x-1/2 -translate-y-1/2" type="file" @change="test" /> -->
 </template>
 
 <script setup lang="ts">
